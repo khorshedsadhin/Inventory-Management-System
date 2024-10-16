@@ -7,20 +7,27 @@ import pymysql # terminal: pip install pymysql
 
 
 def connect_database():
+    # Function to establish a connection to the MySQL database
     try:
         connection = pymysql.connect(host='localhost', user='root', password='070202')
         cursor = connection.cursor()
     except:
+        # Show an error message if there's an issue connecting to the database
         messagebox.showerror('Error', 'Database connectivity issue, open mysql command line client')
         return None, None
 
     return cursor, connection
 
+
 def create_database_table():
+    # Function to create a database and a table for employee data if they don't exist
     cursor, connection = connect_database()
 
+    # Create database and use it
     cursor.execute('CREATE DATABASE IF NOT EXISTS inventory_system')
     cursor.execute('USE inventory_system')
+
+    # Create the employee_data table if it doesn't already exist
     cursor.execute('CREATE TABLE IF NOT EXISTS employee_data (empid INT PRIMARY KEY, name VARCHAR(100), '
                    'email VARCHAR(100), gender VARCHAR(50), dob VARCHAR(30), contact VARCHAR(30), education VARCHAR(30),'
                    'employement_type VARCHAR(50), work_shift VARCHAR(50), address VARCHAR(100), doj VARCHAR(30), '
@@ -28,6 +35,7 @@ def create_database_table():
 
 
 def treeview_data():
+    # Function to fetch all data from the employee_data table and populate the Treeview widget
     cursor, connection = connect_database()
     if not cursor or not connection:
         return
@@ -35,34 +43,43 @@ def treeview_data():
     cursor.execute('USE inventory_system')
 
     try:
+        # Fetch all employee records
         cursor.execute('SELECT * from employee_data')
         employee_records = cursor.fetchall()
 
+        # Clear the Treeview before adding new data
         treeview.delete(*treeview.get_children())
 
+        # Insert fetched records into the Treeview
         for record in employee_records:
-            treeview.insert('',END, values=record)
+            treeview.insert('', END, values=record)
 
     except Exception as e:
+        # Show error message in case of any issue
         messagebox.showerror('Error', f'Error due to {e}')
 
     finally:
+        # Close the database connection
         cursor.close()
         connection.close()
 
-def select_data(event,empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,contact_entry,
-                employement_type_combobox, education_combobox, work_shift_combobox,address_text, doj_date_entry,
+
+
+def select_data(event, empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox, contact_entry,
+                employement_type_combobox, education_combobox, work_shift_combobox, address_text, doj_date_entry,
                 salary_entry, usertype_combobox, password_entry):
 
+    # Function to select a row from Treeview and fill the form fields with its data
     index = treeview.selection()
     content = treeview.item(index)
     row = content['values']
 
-    # clear previous data before inserting selected rows
-    clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,contact_entry,
-                employement_type_combobox, education_combobox, work_shift_combobox,address_text, doj_date_entry,
-                salary_entry, usertype_combobox, password_entry)
+    # Clear previous data from the form fields
+    clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox, contact_entry,
+                 employement_type_combobox, education_combobox, work_shift_combobox, address_text, doj_date_entry,
+                 salary_entry, usertype_combobox, password_entry)
 
+    # Fill form fields with the selected row data
     empId_entry.insert(0, row[0])
     name_entry.insert(0, row[1])
     email_entry.insert(0, row[2])
@@ -72,67 +89,82 @@ def select_data(event,empId_entry, name_entry, email_entry, dob_date_entry, gend
     employement_type_combobox.set(row[6])
     education_combobox.set(row[7])
     work_shift_combobox.set(row[8])
-    address_text.insert(1.0,row[9])
+    address_text.insert(1.0, row[9])
     doj_date_entry.set_date(row[10])
     salary_entry.insert(0, row[11])
     usertype_combobox.set(row[12])
-    password_entry.insert(0,row[13])
+    password_entry.insert(0, row[13])
 
 
 
 def add_employee(empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password):
+    # Function to add a new employee record into the employee_data table
 
-    if (empid=='' or name=='' or email=='' or gender=='Select Gender' or contact==''
-        or employement_type=='Select Type' or education=='Select Education' or work_shift=='Select Work Shift'
-        or address=='\n' or salary=='' or user_type=='Select User Type' or password==''):
+    # Check if all fields are filled
+    if (empid == '' or name == '' or email == '' or gender == 'Select Gender' or contact == ''
+        or employement_type == 'Select Type' or education == 'Select Education' or work_shift == 'Select Work Shift'
+        or address == '\n' or salary == '' or user_type == 'Select User Type' or password == ''):
 
+        # Show error message if any field is empty
         messagebox.showerror('Error', 'All fields are required')
 
     else:
+        # Connect to the database
         cursor, connection = connect_database()
         if not cursor or not connection:
             return
 
         cursor.execute('USE inventory_system')
         try:
+            # Insert the new employee record into the employee_data table
             cursor.execute('INSERT INTO employee_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
                            (empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password))
-            connection.commit()
+            connection.commit()  # Commit the transaction
+
+            # Refresh the Treeview with the new data
             treeview_data()
+
+            # Show success message
             messagebox.showinfo('Success', 'Data is inserted successfully')
 
         except Exception as e:
+            # Show error message in case of any issue
             messagebox.showerror('Error', f'Error due to {e}')
 
         finally:
+            # Close the database connection
             cursor.close()
             connection.close()
+
 
 
 def clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,
                  contact_entry, employement_type_combobox, education_combobox, work_shift_combobox,
                  address_text, doj_date_entry, salary_entry, usertype_combobox, password_entry):
 
-    empId_entry.delete(0,END)
-    name_entry.delete(0,END)
-    email_entry.delete(0,END)
+    # Function to clear all input fields in the form
 
-    dob_date_entry.set_date(date.today())
+    empId_entry.delete(0, END)  # Clear Employee ID field
+    name_entry.delete(0, END)  # Clear Name field
+    email_entry.delete(0, END)  # Clear Email field
 
-    gender_combobox.set('Select Gender')
-    contact_entry.delete(0,END)
-    employement_type_combobox.set('Select Type')
-    education_combobox.set('Select Education')
-    work_shift_combobox.set('Select Work Shift')
-    address_text.delete(1.0,END) # 1.0 -> (1 means 1st row), (0 means 1st character of that row)
+    dob_date_entry.set_date(date.today())  # Reset DOB to today's date
 
-    doj_date_entry.set_date(date.today())
+    gender_combobox.set('Select Gender')  # Reset Gender combobox
+    contact_entry.delete(0, END)  # Clear Contact field
+    employement_type_combobox.set('Select Type')  # Reset Employment Type combobox
+    education_combobox.set('Select Education')  # Reset Education combobox
+    work_shift_combobox.set('Select Work Shift')  # Reset Work Shift combobox
+    address_text.delete(1.0, END)  # Clear Address text box (from 1st row and 1st character)
 
-    salary_entry.delete(0,END)
-    usertype_combobox.set('Select User Type')
-    password_entry.delete(0,END)
+    doj_date_entry.set_date(date.today())  # Reset DOJ to today's date
 
-    treeview.selection_remove(treeview.selection()) # remove any treeview row selection
+    salary_entry.delete(0, END)  # Clear Salary field
+    usertype_combobox.set('Select User Type')  # Reset User Type combobox
+    password_entry.delete(0, END)  # Clear Password field
+
+    treeview.selection_remove(treeview.selection())  # Remove any row selection in Treeview
+    
 
 
 def employee_form(window):
