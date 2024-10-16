@@ -50,8 +50,34 @@ def treeview_data():
         cursor.close()
         connection.close()
 
-def select_data(event):
-    print('data selected')
+def select_data(event,empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,contact_entry,
+                employement_type_combobox, education_combobox, work_shift_combobox,address_text, doj_date_entry,
+                salary_entry, usertype_combobox, password_entry):
+
+    index = treeview.selection()
+    content = treeview.item(index)
+    row = content['values']
+
+    # clear previous data before inserting selected rows
+    clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,contact_entry,
+                employement_type_combobox, education_combobox, work_shift_combobox,address_text, doj_date_entry,
+                salary_entry, usertype_combobox, password_entry)
+
+    empId_entry.insert(0, row[0])
+    name_entry.insert(0, row[1])
+    email_entry.insert(0, row[2])
+    gender_combobox.set(row[3])
+    dob_date_entry.set_date(row[4])
+    contact_entry.insert(0, row[5])
+    employement_type_combobox.set(row[6])
+    education_combobox.set(row[7])
+    work_shift_combobox.set(row[8])
+    address_text.insert(1.0,row[9])
+    doj_date_entry.set_date(row[10])
+    salary_entry.insert(0, row[11])
+    usertype_combobox.set(row[12])
+    password_entry.insert(0,row[13])
+
 
 
 def add_employee(empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password):
@@ -106,6 +132,7 @@ def clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_co
     usertype_combobox.set('Select User Type')
     password_entry.delete(0,END)
 
+    treeview.selection_remove(treeview.selection()) # remove any treeview row selection
 
 
 def employee_form(window):
@@ -200,7 +227,6 @@ def employee_form(window):
     treeview.column('usertype', width=120)
 
     treeview_data() # show all the employees information in mysql
-    treeview.bind('<ButtonRelease-1>', select_data) # left click any row select_data function will be called for that
 
     # Frame to hold employee details form (input fields)
     detail_frame = Frame(employee_frame, bg='white')
@@ -321,4 +347,7 @@ def employee_form(window):
                                                                                                                                                                       address_text, doj_date_entry, salary_entry, usertype_combobox, password_entry))
     clear_button.grid(row=0, column=3, padx=20)
 
+    treeview.bind('<ButtonRelease-1>',lambda event: select_data(event, empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,contact_entry,
+                                                    employement_type_combobox, education_combobox, work_shift_combobox,address_text, doj_date_entry,
+                                                    salary_entry, usertype_combobox, password_entry)) # left click any row select_data function will be called for that
     create_database_table()
