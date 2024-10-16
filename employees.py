@@ -50,6 +50,9 @@ def treeview_data():
         cursor.close()
         connection.close()
 
+def select_data(event):
+    print('data selected')
+
 
 def add_employee(empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password):
 
@@ -197,6 +200,7 @@ def employee_form(window):
     treeview.column('usertype', width=120)
 
     treeview_data() # show all the employees information in mysql
+    treeview.bind('<ButtonRelease-1>', select_data) # left click any row select_data function will be called for that
 
     # Frame to hold employee details form (input fields)
     detail_frame = Frame(employee_frame, bg='white')
