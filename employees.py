@@ -95,7 +95,7 @@ def clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_co
     employement_type_combobox.set('Select Type')
     education_combobox.set('Select Education')
     work_shift_combobox.set('Select Work Shift')
-    address_text.delete(1.0,END)
+    address_text.delete(1.0,END) # 1.0 -> (1 means 1st row), (0 means 1st character of that row)
 
     doj_date_entry.set_date(date.today())
 
