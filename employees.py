@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import ttk # for combobox
 from tkinter import messagebox
+from datetime import date # to access todays date (clear_fields)
 from tkcalendar import DateEntry # terminal: pip install tkcalendar
 import pymysql # terminal: pip install pymysql
 
@@ -13,6 +14,11 @@ def connect_database():
         messagebox.showerror('Error', 'Database connectivity issue, open mysql command line client')
         return None, None
 
+    return cursor, connection
+
+def create_database_table():
+    cursor, connection = connect_database()
+
     cursor.execute('CREATE DATABASE IF NOT EXISTS inventory_system')
     cursor.execute('USE inventory_system')
     cursor.execute('CREATE TABLE IF NOT EXISTS employee_data (empid INT PRIMARY KEY, name VARCHAR(100), '
@@ -20,27 +26,35 @@ def connect_database():
                    'employement_type VARCHAR(50), work_shift VARCHAR(50), address VARCHAR(100), doj VARCHAR(30), '
                    'salary VARCHAR(50), usertype VARCHAR(50), password VARCHAR(50))')
 
-    return cursor, connection
-
 
 def treeview_data():
     cursor, connection = connect_database()
     if not cursor or not connection:
         return
 
-    cursor.execute('SELECT * from employee_data')
-    employee_records = cursor.fetchall()
+    cursor.execute('USE inventory_system')
 
-    treeview.delete(*treeview.get_children())
+    try:
+        cursor.execute('SELECT * from employee_data')
+        employee_records = cursor.fetchall()
 
-    for record in employee_records:
-        treeview.insert('',END, values=record)
+        treeview.delete(*treeview.get_children())
+
+        for record in employee_records:
+            treeview.insert('',END, values=record)
+
+    except Exception as e:
+        messagebox.showerror('Error', f'Error due to {e}')
+
+    finally:
+        cursor.close()
+        connection.close()
 
 
 def add_employee(empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password):
 
     if (empid=='' or name=='' or email=='' or gender=='Select Gender' or contact==''
-        or employement_type=='Select Type' or education=='Select Education' or work_shift=='Select Shift'
+        or employement_type=='Select Type' or education=='Select Education' or work_shift=='Select Work Shift'
         or address=='\n' or salary=='' or user_type=='Select User Type' or password==''):
 
         messagebox.showerror('Error', 'All fields are required')
@@ -50,17 +64,44 @@ def add_employee(empid, name, email, gender, dob, contact, employement_type, edu
         if not cursor or not connection:
             return
 
-        cursor.execute('INSERT INTO employee_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-                       (empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password))
-        connection.commit()
-        treeview_data()
-        messagebox.showinfo('Success', 'Data is inserted successfully')
+        cursor.execute('USE inventory_system')
+        try:
+            cursor.execute('INSERT INTO employee_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+                           (empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password))
+            connection.commit()
+            treeview_data()
+            messagebox.showinfo('Success', 'Data is inserted successfully')
+
+        except Exception as e:
+            messagebox.showerror('Error', f'Error due to {e}')
+
+        finally:
+            cursor.close()
+            connection.close()
 
 
-def clear_fields(empId_entry, name_entry, email_entry, gender_combobox, dob_date_entry, contact_entry,
-                 employement_type_combobox, education_combobox, work_shift_combobox, address_text,
-                 doj_date_entry, salary_entry, usertype_combobox, password_entry):
-    pass
+def clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,
+                 contact_entry, employement_type_combobox, education_combobox, work_shift_combobox,
+                 address_text, doj_date_entry, salary_entry, usertype_combobox, password_entry):
+
+    empId_entry.delete(0,END)
+    name_entry.delete(0,END)
+    email_entry.delete(0,END)
+
+    dob_date_entry.set_date(date.today())
+
+    gender_combobox.set('Select Gender')
+    contact_entry.delete(0,END)
+    employement_type_combobox.set('Select Type')
+    education_combobox.set('Select Education')
+    work_shift_combobox.set('Select Work Shift')
+    address_text.delete(1.0,END)
+
+    doj_date_entry.set_date(date.today())
+
+    salary_entry.delete(0,END)
+    usertype_combobox.set('Select User Type')
+    password_entry.delete(0,END)
 
 
 
@@ -271,5 +312,9 @@ def employee_form(window):
     delete_button.grid(row=0, column=2, padx=20)
 
     # Clear Button to reset the form
-    clear_button = Button(button_frame, text='Clear', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D')
+    clear_button = Button(button_frame, text='Clear', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command= lambda: clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,
+                                                                                                                                                                      contact_entry, employement_type_combobox, education_combobox, work_shift_combobox,
+                                                                                                                                                                      address_text, doj_date_entry, salary_entry, usertype_combobox, password_entry))
     clear_button.grid(row=0, column=3, padx=20)
+
+    create_database_table()
