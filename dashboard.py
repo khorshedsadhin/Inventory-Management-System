@@ -1,4 +1,3 @@
-|#testing if changes work
 from tkinter import *
 
 # import from another python file
