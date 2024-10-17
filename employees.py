@@ -9,7 +9,7 @@ import pymysql # terminal: pip install pymysql
 def connect_database():
     # Function to establish a connection to the MySQL database
     try:
-        connection = pymysql.connect(host='localhost', user='root', password='070202')
+        connection = pymysql.connect(host='localhost', user='root', password='1234')
         cursor = connection.cursor()
     except:
         # Show an error message if there's an issue connecting to the database
@@ -164,7 +164,7 @@ def clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_co
     password_entry.delete(0, END)  # Clear Password field
 
     treeview.selection_remove(treeview.selection())  # Remove any row selection in Treeview
-    
+
 
 
 def employee_form(window):
