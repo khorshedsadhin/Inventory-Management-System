@@ -77,7 +77,7 @@ def select_data(event, empId_entry, name_entry, email_entry, dob_date_entry, gen
     # Clear previous data from the form fields
     clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox, contact_entry,
                  employement_type_combobox, education_combobox, work_shift_combobox, address_text, doj_date_entry,
-                 salary_entry, usertype_combobox, password_entry)
+                 salary_entry, usertype_combobox, password_entry, False)
 
     # Fill form fields with the selected row data
     empId_entry.insert(0, row[0])
@@ -116,6 +116,8 @@ def add_employee(empid, name, email, gender, dob, contact, employement_type, edu
 
         cursor.execute('USE inventory_system')
         try:
+            address = address.strip() # to not add \n at the end of the data
+
             # Insert the new employee record into the employee_data table
             cursor.execute('INSERT INTO employee_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
                            (empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password))
@@ -140,7 +142,7 @@ def add_employee(empid, name, email, gender, dob, contact, employement_type, edu
 
 def clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,
                  contact_entry, employement_type_combobox, education_combobox, work_shift_combobox,
-                 address_text, doj_date_entry, salary_entry, usertype_combobox, password_entry):
+                 address_text, doj_date_entry, salary_entry, usertype_combobox, password_entry, check):
 
     # Function to clear all input fields in the form
 
@@ -163,7 +165,41 @@ def clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_co
     usertype_combobox.set('Select User Type')  # Reset User Type combobox
     password_entry.delete(0, END)  # Clear Password field
 
-    treeview.selection_remove(treeview.selection())  # Remove any row selection in Treeview
+    if check:
+        treeview.selection_remove(treeview.selection())  # Remove any row selection in Treeview
+
+
+def update_employee(empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password):
+    selected = treeview.selection()
+    if not selected:
+        messagebox.showerror('Error', 'No row is selected')
+    else:
+        # Connect to the database
+        cursor, connection = connect_database()
+        if not cursor or not connection:
+            return
+
+        cursor.execute('USE inventory_system')
+
+        # Select the row which is going to be updated (check if update is needed or not)
+        cursor.execute('SELECT * from employee_data WHERE empid=%s', (empid,)) # provided comma(,) after empid -> to treat empid as an element of tuple
+        current_data = cursor.fetchone()
+        current_data = current_data[1:] # exluding empid (primary key) to compare
+
+        address = address.strip()
+        new_data = (name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password)
+
+        if current_data == new_data:
+            messagebox.showinfo('Information', 'No changes detected')
+            return
+
+        # Update Database
+        cursor.execute('UPDATE employee_data SET name=%s, email=%s, gender=%s, dob=%s, contact=%s, employement_type=%s,'
+                       'education=%s, work_shift=%s, address=%s, doj=%s, salary=%s, usertype=%s, password=%s WHERE empid=%s',
+                       (name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password, empid))
+        connection.commit()
+        treeview_data()
+        messagebox.showinfo('Success', 'Data is updated successfully')
 
 
 
@@ -366,7 +402,10 @@ def employee_form(window):
     add_button.grid(row=0, column=0, padx=20)
 
     # Update Button
-    update_button = Button(button_frame, text='Update', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D')
+    update_button = Button(button_frame, text='Update', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command= lambda: update_employee(empId_entry.get(), name_entry.get(), email_entry.get(), gender_combobox.get(),
+                                                                                                                                                                           dob_date_entry.get(), contact_entry.get(), employement_type_combobox.get(),
+                                                                                                                                                                           education_combobox.get(), work_shift_combobox.get(), address_text.get(1.0, END),
+                                                                                                                                                                           doj_date_entry.get(), salary_entry.get(), usertype_combobox.get(), password_entry.get()))
     update_button.grid(row=0, column=1, padx=20)
 
     # Delete Button
@@ -376,7 +415,7 @@ def employee_form(window):
     # Clear Button to reset the form
     clear_button = Button(button_frame, text='Clear', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command= lambda: clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,
                                                                                                                                                                       contact_entry, employement_type_combobox, education_combobox, work_shift_combobox,
-                                                                                                                                                                      address_text, doj_date_entry, salary_entry, usertype_combobox, password_entry))
+                                                                                                                                                                      address_text, doj_date_entry, salary_entry, usertype_combobox, password_entry, True))
     clear_button.grid(row=0, column=3, padx=20)
 
     treeview.bind('<ButtonRelease-1>',lambda event: select_data(event, empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,contact_entry,
