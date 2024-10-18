@@ -5,8 +5,6 @@ from datetime import date # to access todays date (clear_fields)
 from tkcalendar import DateEntry # terminal: pip install tkcalendar
 import pymysql # terminal: pip install pymysql
 
-""" todo : some problem in treeview (Education, Employement Type) -> values are not showing properly """
-
 
 def connect_database():
     # Function to establish a connection to the MySQL database
@@ -31,8 +29,8 @@ def create_database_table():
 
     # Create the employee_data table if it doesn't already exist
     cursor.execute('CREATE TABLE IF NOT EXISTS employee_data (empid INT PRIMARY KEY, name VARCHAR(100), '
-                   'email VARCHAR(100), gender VARCHAR(50), dob VARCHAR(30), contact VARCHAR(30), education VARCHAR(30),'
-                   'employement_type VARCHAR(50), work_shift VARCHAR(50), address VARCHAR(100), doj VARCHAR(30), '
+                   'email VARCHAR(100), gender VARCHAR(50), dob VARCHAR(30), contact VARCHAR(30),employement_type VARCHAR(50),'
+                   'education VARCHAR(30), work_shift VARCHAR(50), address VARCHAR(100), doj VARCHAR(30), '
                    'salary VARCHAR(50), usertype VARCHAR(50), password VARCHAR(50))')
 
 
@@ -190,29 +188,29 @@ def update_employee(empid, name, email, gender, dob, contact, employement_type, 
             current_data = current_data[1:] # exluding empid (primary key) to compare
 
             address = address.strip()
+
             new_data = (name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password)
 
             if current_data == new_data:
                 messagebox.showinfo('Information', 'No changes detected')
                 return
 
-            # Update Database
-            cursor.execute('UPDATE employee_data SET name=%s, email=%s, gender=%s, dob=%s, contact=%s, employement_type=%s,'
-                        'education=%s, work_shift=%s, address=%s, doj=%s, salary=%s, usertype=%s, password=%s WHERE empid=%s',
-                        (name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password, empid))
-            connection.commit()
-            treeview_data()
-            messagebox.showinfo('Success', 'Data is updated successfully')
-
         except Exception as e:
             # Show error message in case of any issue
             messagebox.showerror('Error', f'Error due to {e}')
 
-        finally:
-            # Close the database connection
-            cursor.close()
-            connection.close()
 
+        # Update Database
+        cursor.execute('UPDATE employee_data SET name=%s, email=%s, gender=%s, dob=%s, contact=%s, employement_type=%s,'
+                    'education=%s, work_shift=%s, address=%s, doj=%s, salary=%s, usertype=%s, password=%s WHERE empid=%s',
+                    (name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password, empid))
+        connection.commit()
+        treeview_data()
+        messagebox.showinfo('Success', 'Data is updated successfully')
+
+        # Close the database connection
+        cursor.close()
+        connection.close()
 
 
 def delete_employee(empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password):
@@ -231,6 +229,7 @@ def delete_employee(empid, name, email, gender, dob, contact, employement_type, 
 
 def employee_form(window):
     # Function to display the Employee Management form
+    create_database_table()
 
     # Create a frame for the employee form
     global back_image, treeview
@@ -450,4 +449,3 @@ def employee_form(window):
     treeview.bind('<ButtonRelease-1>',lambda event: select_data(event, empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,contact_entry,
                                                     employement_type_combobox, education_combobox, work_shift_combobox,address_text, doj_date_entry,
                                                     salary_entry, usertype_combobox, password_entry)) # left click any row select_data function will be called for that
-    create_database_table()
