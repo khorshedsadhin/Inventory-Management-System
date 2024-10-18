@@ -213,18 +213,74 @@ def update_employee(empid, name, email, gender, dob, contact, employement_type, 
         connection.close()
 
 
-def delete_employee(empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password):
+def delete_employee(empid):
     selected = treeview.selection()
     if not selected:
         messagebox.showerror('Error', 'No row is selected')
 
     else:
-        # Connect to the database
+        result = messagebox.askyesno('Confirm', 'Do you really want to delete the record')
+
+        if result:
+            # Connect to the database
+            cursor, connection = connect_database()
+            if not cursor or not connection:
+                return
+
+            try:
+                cursor.execute('USE inventory_system')
+                cursor.execute('DELETE FROM employee_data where empid=%s', (empid,))
+                connection.commit()
+                treeview_data()
+                messagebox.showinfo('Success', 'Record is deleted')
+
+            except Exception as e:
+                # Show error message in case of any issue
+                messagebox.showerror('Error', f'Error due to {e}')
+
+            finally:
+                # Close the database connection
+                cursor.close()
+                connection.close()
+
+
+def search_employee(search_option, value):
+    if search_option == 'Search By':
+        messagebox.showerror('Error', 'No option is selected')
+
+    elif value == '':
+        messagebox.showerror('Error', 'Enter the value to search')
+
+    else:
+        search_option = search_option.replace(' ', '_')
+
         cursor, connection = connect_database()
         if not cursor or not connection:
             return
 
-        cursor.execute('USE inventory_system')
+        try:
+            cursor.execute('USE inventory_system')
+            cursor.execute(f'SELECT * from employee_data WHERE {search_option} LIKE %s', f'%{value}%')
+            records = cursor.fetchall()
+
+            treeview.delete(*treeview.get_children())
+            for record in records:
+                treeview.insert('', END, value=record)
+
+        except Exception as e:
+            # Show error message in case of any issue
+            messagebox.showerror('Error', f'Error due to {e}')
+
+        finally:
+            # Close the database connection
+            cursor.close()
+            connection.close()
+
+
+def show_all(search_combobox, search_entry):
+    treeview_data()
+    search_combobox.set('Search By')
+    search_entry.delete(0,END)
 
 
 def employee_form(window):
@@ -254,7 +310,7 @@ def employee_form(window):
     search_frame.pack()
 
     # Combobox for selecting search criteria (Id, Name, Email)
-    search_combobox =  ttk.Combobox(search_frame, values=('Id', 'Name', 'Email'), font=('times new roman', 12), state='readonly')
+    search_combobox =  ttk.Combobox(search_frame, values=('EmpId', 'Name', 'Email', 'Gender', 'Employement Type', 'Work Shift'), font=('times new roman', 12), state='readonly')
     search_combobox.set('Search By')
     search_combobox.grid(row=0, column=0, padx=20)
 
@@ -263,11 +319,11 @@ def employee_form(window):
     search_entry.grid(row=0, column=1)
 
     # Search button
-    search_button = Button(search_frame, text='Search', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D')
+    search_button = Button(search_frame, text='Search', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command= lambda: search_employee(search_combobox.get(), search_entry.get()))
     search_button.grid(row=0, column=2, padx=20)
 
     # Show All button to display all employees
-    show_button = Button(search_frame, text='Show All', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D')
+    show_button = Button(search_frame, text='Show All', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command= lambda: show_all(search_combobox, search_entry))
     show_button.grid(row=0, column=3)
 
     # Horizontal and vertical scrollbars for the treeview (employee table)
@@ -434,10 +490,7 @@ def employee_form(window):
     update_button.grid(row=0, column=1, padx=20)
 
     # Delete Button
-    delete_button = Button(button_frame, text='Delete', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command=lambda: delete_employee(empId_entry.get(), name_entry.get(), email_entry.get(), gender_combobox.get(),
-                                                                                                                                                                          dob_date_entry.get(), contact_entry.get(), employement_type_combobox.get(),
-                                                                                                                                                                          education_combobox.get(), work_shift_combobox.get(), address_text.get(1.0, END),
-                                                                                                                                                                          doj_date_entry.get(), salary_entry.get(), usertype_combobox.get(), password_entry.get()))
+    delete_button = Button(button_frame, text='Delete', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command=lambda: delete_employee(empId_entry.get()))
     delete_button.grid(row=0, column=2, padx=20)
 
     # Clear Button to reset the form
