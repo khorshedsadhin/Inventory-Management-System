@@ -5,6 +5,8 @@ from datetime import date # to access todays date (clear_fields)
 from tkcalendar import DateEntry # terminal: pip install tkcalendar
 import pymysql # terminal: pip install pymysql
 
+""" todo : some problem in treeview (Education, Employement Type) -> values are not showing properly """
+
 
 def connect_database():
     # Function to establish a connection to the MySQL database
@@ -179,28 +181,52 @@ def update_employee(empid, name, email, gender, dob, contact, employement_type, 
         if not cursor or not connection:
             return
 
-        cursor.execute('USE inventory_system')
+        try:
+            cursor.execute('USE inventory_system')
 
-        # Select the row which is going to be updated (check if update is needed or not)
-        cursor.execute('SELECT * from employee_data WHERE empid=%s', (empid,)) # provided comma(,) after empid -> to treat empid as an element of tuple
-        current_data = cursor.fetchone()
-        current_data = current_data[1:] # exluding empid (primary key) to compare
+            # Select the row which is going to be updated (check if update is needed or not)
+            cursor.execute('SELECT * from employee_data WHERE empid=%s', (empid,)) # provided comma(,) after empid -> to treat empid as an element of tuple
+            current_data = cursor.fetchone()
+            current_data = current_data[1:] # exluding empid (primary key) to compare
 
-        address = address.strip()
-        new_data = (name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password)
+            address = address.strip()
+            new_data = (name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password)
 
-        if current_data == new_data:
-            messagebox.showinfo('Information', 'No changes detected')
+            if current_data == new_data:
+                messagebox.showinfo('Information', 'No changes detected')
+                return
+
+            # Update Database
+            cursor.execute('UPDATE employee_data SET name=%s, email=%s, gender=%s, dob=%s, contact=%s, employement_type=%s,'
+                        'education=%s, work_shift=%s, address=%s, doj=%s, salary=%s, usertype=%s, password=%s WHERE empid=%s',
+                        (name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password, empid))
+            connection.commit()
+            treeview_data()
+            messagebox.showinfo('Success', 'Data is updated successfully')
+
+        except Exception as e:
+            # Show error message in case of any issue
+            messagebox.showerror('Error', f'Error due to {e}')
+
+        finally:
+            # Close the database connection
+            cursor.close()
+            connection.close()
+
+
+
+def delete_employee(empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password):
+    selected = treeview.selection()
+    if not selected:
+        messagebox.showerror('Error', 'No row is selected')
+
+    else:
+        # Connect to the database
+        cursor, connection = connect_database()
+        if not cursor or not connection:
             return
 
-        # Update Database
-        cursor.execute('UPDATE employee_data SET name=%s, email=%s, gender=%s, dob=%s, contact=%s, employement_type=%s,'
-                       'education=%s, work_shift=%s, address=%s, doj=%s, salary=%s, usertype=%s, password=%s WHERE empid=%s',
-                       (name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password, empid))
-        connection.commit()
-        treeview_data()
-        messagebox.showinfo('Success', 'Data is updated successfully')
-
+        cursor.execute('USE inventory_system')
 
 
 def employee_form(window):
@@ -409,7 +435,10 @@ def employee_form(window):
     update_button.grid(row=0, column=1, padx=20)
 
     # Delete Button
-    delete_button = Button(button_frame, text='Delete', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D')
+    delete_button = Button(button_frame, text='Delete', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command=lambda: delete_employee(empId_entry.get(), name_entry.get(), email_entry.get(), gender_combobox.get(),
+                                                                                                                                                                          dob_date_entry.get(), contact_entry.get(), employement_type_combobox.get(),
+                                                                                                                                                                          education_combobox.get(), work_shift_combobox.get(), address_text.get(1.0, END),
+                                                                                                                                                                          doj_date_entry.get(), salary_entry.get(), usertype_combobox.get(), password_entry.get()))
     delete_button.grid(row=0, column=2, padx=20)
 
     # Clear Button to reset the form
