@@ -3,6 +3,7 @@ from tkinter import *
 # import from another python file
 from employees import employee_form
 from supplier import supplier_form
+from category import category_form
 
 # GUI part
 def center_window(window, width=1270, height=668):
@@ -59,7 +60,7 @@ def create_left_menu(window):
     # lambda is needed when the callback function has parameters
     create_menu_button(leftFrame, employee_icon, ' Employees', lambda: employee_form(window))
     create_menu_button(leftFrame, supplier_icon, ' Suppliers', lambda: supplier_form(window))
-    create_menu_button(leftFrame, category_icon, ' Categories', show_categories)
+    create_menu_button(leftFrame, category_icon, ' Categories', lambda: category_form(window))
     create_menu_button(leftFrame, products_icon, ' Products', show_products)
     create_menu_button(leftFrame, sales_icon, ' Sales', show_sales)
     create_menu_button(leftFrame, exit_icon, ' Exit', window.quit)
@@ -72,10 +73,6 @@ def create_menu_button(frame, icon, text, callback):
     button = Button(frame, image=icon, compound=LEFT, text=text, font=('times new roman', 20, 'bold'),
                     anchor='w', padx=10, command=callback)
     button.pack(fill=X)
-
-def show_categories():
-    print("Categories button clicked")
-    # Add logic to display category-related functionality
 
 def show_products():
     print("Products button clicked")
