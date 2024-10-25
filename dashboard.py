@@ -7,14 +7,12 @@ from category import category_form
 
 # Global variable to track the currently displayed frame, ensuring only one frame is visible at a time
 current_frame = None
-
 def show_form(form_function, window):
     """
     Ensures only one frame is visible at a time by hiding the current frame if it exists,
     then displaying the new frame created by form_function.
     """
     global current_frame  # Access the global variable to track the currently open frame
-
     # Hide the current frame if one is open
     if current_frame:
         current_frame.place_forget()  # Removes the frame from view without destroying it
