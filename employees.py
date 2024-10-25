@@ -502,3 +502,4 @@ def employee_form(window):
     treeview.bind('<ButtonRelease-1>',lambda event: select_data(event, empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,contact_entry,
                                                     employement_type_combobox, education_combobox, work_shift_combobox,address_text, doj_date_entry,
                                                     salary_entry, usertype_combobox, password_entry)) # left click any row select_data function will be called for that
+    return employee_frame

@@ -5,6 +5,24 @@ from employees import employee_form
 from supplier import supplier_form
 from category import category_form
 
+# Global variable to track the currently displayed frame, ensuring only one frame is visible at a time
+current_frame = None
+
+def show_form(form_function, window):
+    """
+    Ensures only one frame is visible at a time by hiding the current frame if it exists,
+    then displaying the new frame created by form_function.
+    """
+    global current_frame  # Access the global variable to track the currently open frame
+
+    # Hide the current frame if one is open
+    if current_frame:
+        current_frame.place_forget()  # Removes the frame from view without destroying it
+
+    # Create and display the new frame by calling the provided form function
+    current_frame = form_function(window)
+
+
 # GUI part
 def center_window(window, width=1270, height=668):
     """Centers the window on the screen."""
@@ -58,9 +76,9 @@ def create_left_menu(window):
     # Create buttons with icons
     # without lambda this function will call automatically when the code is running (ex: without the click of employee button)
     # lambda is needed when the callback function has parameters
-    create_menu_button(leftFrame, employee_icon, ' Employees', lambda: employee_form(window))
+    create_menu_button(leftFrame, employee_icon, ' Employees', lambda: show_form(employee_form, window))
     create_menu_button(leftFrame, supplier_icon, ' Suppliers', lambda: supplier_form(window))
-    create_menu_button(leftFrame, category_icon, ' Categories', lambda: category_form(window))
+    create_menu_button(leftFrame, category_icon, ' Categories', lambda: show_form(category_form, window))
     create_menu_button(leftFrame, products_icon, ' Products', show_products)
     create_menu_button(leftFrame, sales_icon, ' Sales', show_sales)
     create_menu_button(leftFrame, exit_icon, ' Exit', window.quit)

@@ -208,3 +208,5 @@ def category_form(window):
 
     # Bind treeview row selection to populate input fields
     treeview.bind('<ButtonRelease-1>', lambda event: select_data(event, id_entry, category_name_entry, description_text))
+
+    return category_frame
