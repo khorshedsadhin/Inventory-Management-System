@@ -75,7 +75,7 @@ def create_left_menu(window):
     # without lambda this function will call automatically when the code is running (ex: without the click of employee button)
     # lambda is needed when the callback function has parameters
     create_menu_button(leftFrame, employee_icon, ' Employees', lambda: show_form(employee_form, window))
-    create_menu_button(leftFrame, supplier_icon, ' Suppliers', lambda: supplier_form(window))
+    create_menu_button(leftFrame, supplier_icon, ' Suppliers', lambda: show_form(supplier_form, window))
     create_menu_button(leftFrame, category_icon, ' Categories', lambda: show_form(category_form, window))
     create_menu_button(leftFrame, products_icon, ' Products', show_products)
     create_menu_button(leftFrame, sales_icon, ' Sales', show_sales)
