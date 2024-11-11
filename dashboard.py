@@ -4,6 +4,7 @@ from tkinter import *
 from employees import employee_form
 from supplier import supplier_form
 from category import category_form
+from products import product_form
 
 # Global variable to track the currently displayed frame, ensuring only one frame is visible at a time
 current_frame = None
@@ -77,7 +78,7 @@ def create_left_menu(window):
     create_menu_button(leftFrame, employee_icon, ' Employees', lambda: show_form(employee_form, window))
     create_menu_button(leftFrame, supplier_icon, ' Suppliers', lambda: show_form(supplier_form, window))
     create_menu_button(leftFrame, category_icon, ' Categories', lambda: show_form(category_form, window))
-    create_menu_button(leftFrame, products_icon, ' Products', show_products)
+    create_menu_button(leftFrame, products_icon, ' Products', lambda: product_form(window))
     create_menu_button(leftFrame, sales_icon, ' Sales', show_sales)
     create_menu_button(leftFrame, exit_icon, ' Exit', window.quit)
 
@@ -89,10 +90,6 @@ def create_menu_button(frame, icon, text, callback):
     button = Button(frame, image=icon, compound=LEFT, text=text, font=('times new roman', 20, 'bold'),
                     anchor='w', padx=10, command=callback)
     button.pack(fill=X)
-
-def show_products():
-    print("Products button clicked")
-    # Add logic to display product-related functionality
 
 def show_sales():
     print("Sales button clicked")
