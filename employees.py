@@ -1,9 +1,10 @@
+import re  # to check validation
 from tkinter import *
-from tkinter import ttk # for combobox
+from tkinter import ttk  # for combobox
 from tkinter import messagebox
-from datetime import date # to access todays date (clear_fields)
-from tkcalendar import DateEntry # terminal: pip install tkcalendar
-import pymysql # terminal: pip install pymysql
+from datetime import date  # to access today's date (clear_fields)
+from tkcalendar import DateEntry  # terminal: pip install tkcalendar
+import pymysql  # terminal: pip install pymysql
 
 
 def connect_database():
@@ -28,10 +29,19 @@ def create_database_table():
     cursor.execute('USE inventory_system')
 
     # Create the employee_data table if it doesn't already exist
-    cursor.execute('CREATE TABLE IF NOT EXISTS employee_data (empid INT PRIMARY KEY, name VARCHAR(100), '
-                   'email VARCHAR(100), gender VARCHAR(50), dob VARCHAR(30), contact VARCHAR(30),employement_type VARCHAR(50),'
-                   'education VARCHAR(30), work_shift VARCHAR(50), address VARCHAR(100), doj VARCHAR(30), '
-                   'salary VARCHAR(50), usertype VARCHAR(50), password VARCHAR(50))')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS employee_data (
+                      empid INT PRIMARY KEY,
+                      name VARCHAR(100),
+                      email VARCHAR(100),
+                      gender VARCHAR(50),
+                      contact VARCHAR(30),
+                      education VARCHAR(30),
+                      address VARCHAR(100),
+                      doj VARCHAR(30),
+                      salary VARCHAR(50),
+                      usertype VARCHAR(50),
+                      password VARCHAR(50)
+                      )''')
 
 
 def treeview_data():
@@ -64,9 +74,8 @@ def treeview_data():
         connection.close()
 
 
-
-def select_data(event, empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox, contact_entry,
-                employement_type_combobox, education_combobox, work_shift_combobox, address_text, doj_date_entry,
+def select_data(event, empId_entry, name_entry, email_entry, gender_combobox, contact_entry,
+                education_combobox, address_text, doj_date_entry,
                 salary_entry, usertype_combobox, password_entry):
 
     # Function to select a row from Treeview and fill the form fields with its data
@@ -75,8 +84,8 @@ def select_data(event, empId_entry, name_entry, email_entry, dob_date_entry, gen
     row = content['values']
 
     # Clear previous data from the form fields
-    clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox, contact_entry,
-                 employement_type_combobox, education_combobox, work_shift_combobox, address_text, doj_date_entry,
+    clear_fields(empId_entry, name_entry, email_entry, gender_combobox, contact_entry,
+                 education_combobox, address_text, doj_date_entry,
                  salary_entry, usertype_combobox, password_entry, False)
 
     # Fill form fields with the selected row data
@@ -84,65 +93,79 @@ def select_data(event, empId_entry, name_entry, email_entry, dob_date_entry, gen
     name_entry.insert(0, row[1])
     email_entry.insert(0, row[2])
     gender_combobox.set(row[3])
-    dob_date_entry.set_date(row[4])
-    contact_entry.insert(0, row[5])
-    employement_type_combobox.set(row[6])
-    education_combobox.set(row[7])
-    work_shift_combobox.set(row[8])
-    address_text.insert(1.0, row[9])
-    doj_date_entry.set_date(row[10])
-    salary_entry.insert(0, row[11])
-    usertype_combobox.set(row[12])
-    password_entry.insert(0, row[13])
+
+    # Check if contact number has a leading "0" and add it if missing
+    contact_number = str(row[4])
+    if not contact_number.startswith("0"):
+        contact_number = "0" + contact_number
+
+    contact_entry.insert(0, contact_number)
+
+    education_combobox.set(row[5])
+    address_text.insert(1.0, row[6])
+    doj_date_entry.set_date(row[7])
+    salary_entry.insert(0, row[8])
+    usertype_combobox.set(row[9])
+    password_entry.insert(0, row[10])
 
 
-
-def add_employee(empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password):
+def add_employee(empid, name, email, gender, contact, education, address, doj, salary, user_type, password):
     # Function to add a new employee record into the employee_data table
 
     # Check if all fields are filled
     if (empid == '' or name == '' or email == '' or gender == 'Select Gender' or contact == ''
-        or employement_type == 'Select Type' or education == 'Select Education' or work_shift == 'Select Work Shift'
-        or address == '\n' or salary == '' or user_type == 'Select User Type' or password == ''):
+        or education == 'Select Education' or address == '\n' or salary == ''
+        or user_type == 'Select User Type' or password == ''):
 
         # Show error message if any field is empty
         messagebox.showerror('Error', 'All fields are required')
+        return
 
-    else:
-        # Connect to the database
-        cursor, connection = connect_database()
-        if not cursor or not connection:
-            return
+    # Contact validation: 11 digits, starts with "01", third digit 3-9, other 8 can be any digit
+    if not re.fullmatch(r"01[3-9]\d{8}", contact):
+        messagebox.showerror('Error', 'Contact number must be 11 digits, start with "01", and have the third digit between 3 and 9.')
+        return
 
-        cursor.execute('USE inventory_system')
-        try:
-            address = address.strip() # to not add \n at the end of the data
+    # Gmail validation: contains "@gmail.com", all lowercase
+    if not re.fullmatch(r"[a-z0-9._%+-]+@gmail\.com", email):
+        messagebox.showerror('Error', 'Email must be a valid Gmail address with only lowercase letters and no special characters other than ".", "_", "%" or "+".')
+        return
 
-            # Insert the new employee record into the employee_data table
-            cursor.execute('INSERT INTO employee_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-                           (empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password))
-            connection.commit()  # Commit the transaction
+    # Connect to the database
+    cursor, connection = connect_database()
+    if not cursor or not connection:
+        return
 
-            # Refresh the Treeview with the new data
-            treeview_data()
+    cursor.execute('USE inventory_system')
+    try:
+        address = address.strip()  # to not add \n at the end of the data
 
-            # Show success message
-            messagebox.showinfo('Success', 'Data is inserted successfully')
+        # Insert the new employee record into the employee_data table
+        cursor.execute('''INSERT INTO employee_data (empid, name, email, gender, contact,
+                          education, address, doj, salary, usertype, password)
+                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
+                       (empid, name, email, gender, contact, education, address, doj, salary, user_type, password))
+        connection.commit()  # Commit the transaction
 
-        except Exception as e:
-            # Show error message in case of any issue
-            messagebox.showerror('Error', f'Error due to {e}')
+        # Refresh the Treeview with the new data
+        treeview_data()
 
-        finally:
-            # Close the database connection
-            cursor.close()
-            connection.close()
+        # Show success message
+        messagebox.showinfo('Success', 'Data is inserted successfully')
+
+    except Exception as e:
+        # Show error message in case of any issue
+        messagebox.showerror('Error', f'Error due to {e}')
+
+    finally:
+        # Close the database connection
+        cursor.close()
+        connection.close()
 
 
-
-def clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,
-                 contact_entry, employement_type_combobox, education_combobox, work_shift_combobox,
-                 address_text, doj_date_entry, salary_entry, usertype_combobox, password_entry, check):
+def clear_fields(empId_entry, name_entry, email_entry, gender_combobox,
+                 contact_entry, education_combobox, address_text, doj_date_entry,
+                 salary_entry, usertype_combobox, password_entry, check):
 
     # Function to clear all input fields in the form
 
@@ -150,13 +173,9 @@ def clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_co
     name_entry.delete(0, END)  # Clear Name field
     email_entry.delete(0, END)  # Clear Email field
 
-    dob_date_entry.set_date(date.today())  # Reset DOB to today's date
-
     gender_combobox.set('Select Gender')  # Reset Gender combobox
     contact_entry.delete(0, END)  # Clear Contact field
-    employement_type_combobox.set('Select Type')  # Reset Employment Type combobox
     education_combobox.set('Select Education')  # Reset Education combobox
-    work_shift_combobox.set('Select Work Shift')  # Reset Work Shift combobox
     address_text.delete(1.0, END)  # Clear Address text box (from 1st row and 1st character)
 
     doj_date_entry.set_date(date.today())  # Reset DOJ to today's date
@@ -169,45 +188,57 @@ def clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_co
         treeview.selection_remove(treeview.selection())  # Remove any row selection in Treeview
 
 
-def update_employee(empid, name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password):
+def update_employee(empid, name, email, gender, contact, education, address, doj, salary, user_type, password):
     selected = treeview.selection()
     if not selected:
         messagebox.showerror('Error', 'No row is selected')
-    else:
-        # Connect to the database
-        cursor, connection = connect_database()
-        if not cursor or not connection:
+        return
+
+    # Contact validation: 11 digits, starts with "01", third digit 3-9, other 8 can be any digit
+    if not re.fullmatch(r"01[3-9]\d{8}", contact):
+        messagebox.showerror('Error', 'Contact number must be 11 digits, start with "01", and have the third digit between 3 and 9.')
+        return
+
+    # Gmail validation: contains "@gmail.com", all lowercase
+    if not re.fullmatch(r"[a-z0-9._%+-]+@gmail\.com", email):
+        messagebox.showerror('Error', 'Email must be a valid Gmail address with only lowercase letters and no special characters other than ".", "_", "%" or "+".')
+        return
+
+    # Connect to the database
+    cursor, connection = connect_database()
+    if not cursor or not connection:
+        return
+
+    try:
+        cursor.execute('USE inventory_system')
+
+        # Select the row which is going to be updated (check if update is needed or not)
+        cursor.execute('SELECT * FROM employee_data WHERE empid=%s', (empid,))
+        current_data = cursor.fetchone()
+        current_data = current_data[1:]  # excluding empid (primary key) to compare
+
+        address = address.strip()
+
+        new_data = (name, email, gender, contact, education, address, doj, salary, user_type, password)
+
+        if current_data == new_data:
+            messagebox.showinfo('Information', 'No changes detected')
             return
 
-        try:
-            cursor.execute('USE inventory_system')
-
-            # Select the row which is going to be updated (check if update is needed or not)
-            cursor.execute('SELECT * from employee_data WHERE empid=%s', (empid,)) # provided comma(,) after empid -> to treat empid as an element of tuple
-            current_data = cursor.fetchone()
-            current_data = current_data[1:] # exluding empid (primary key) to compare
-
-            address = address.strip()
-
-            new_data = (name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password)
-
-            if current_data == new_data:
-                messagebox.showinfo('Information', 'No changes detected')
-                return
-
-        except Exception as e:
-            # Show error message in case of any issue
-            messagebox.showerror('Error', f'Error due to {e}')
-
-
         # Update Database
-        cursor.execute('UPDATE employee_data SET name=%s, email=%s, gender=%s, dob=%s, contact=%s, employement_type=%s,'
-                    'education=%s, work_shift=%s, address=%s, doj=%s, salary=%s, usertype=%s, password=%s WHERE empid=%s',
-                    (name, email, gender, dob, contact, employement_type, education, work_shift, address, doj, salary, user_type, password, empid))
+        cursor.execute('''UPDATE employee_data SET name=%s, email=%s, gender=%s, contact=%s,
+                          education=%s, address=%s, doj=%s, salary=%s, usertype=%s, password=%s
+                          WHERE empid=%s''',
+                       (name, email, gender, contact, education, address, doj, salary, user_type, password, empid))
         connection.commit()
         treeview_data()
         messagebox.showinfo('Success', 'Data is updated successfully')
 
+    except Exception as e:
+        # Show error message in case of any issue
+        messagebox.showerror('Error', f'Error due to {e}')
+
+    finally:
         # Close the database connection
         cursor.close()
         connection.close()
@@ -280,7 +311,7 @@ def search_employee(search_option, value):
 def show_all(search_combobox, search_entry):
     treeview_data()
     search_combobox.set('Search By')
-    search_entry.delete(0,END)
+    search_entry.delete(0, END)
 
 
 def employee_form(window):
@@ -302,15 +333,15 @@ def employee_form(window):
 
     # Back button to exit the employee form
     back_image = PhotoImage(file='assets/back.png')
-    back_button = Button(top_frame, image=back_image, bd=0, cursor='hand2', bg='white', command= lambda: employee_frame.place_forget())
+    back_button = Button(top_frame, image=back_image, bd=0, cursor='hand2', bg='white', command=lambda: employee_frame.place_forget())
     back_button.place(x=10, y=0)
 
     # Search frame for search criteria and buttons
     search_frame = Frame(top_frame, bg='white')
     search_frame.pack()
 
-    # Combobox for selecting search criteria (Id, Name, Email)
-    search_combobox =  ttk.Combobox(search_frame, values=('EmpId', 'Name', 'Email', 'Gender', 'Employement Type', 'Work Shift'), font=('times new roman', 12), state='readonly')
+    # Combobox for selecting search criteria
+    search_combobox = ttk.Combobox(search_frame, values=('EmpId', 'Name', 'Email', 'Gender'), font=('times new roman', 12), state='readonly')
     search_combobox.set('Search By')
     search_combobox.grid(row=0, column=0, padx=20)
 
@@ -319,11 +350,13 @@ def employee_form(window):
     search_entry.grid(row=0, column=1)
 
     # Search button
-    search_button = Button(search_frame, text='Search', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command= lambda: search_employee(search_combobox.get(), search_entry.get()))
+    search_button = Button(search_frame, text='Search', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D',
+                           command=lambda: search_employee(search_combobox.get(), search_entry.get()))
     search_button.grid(row=0, column=2, padx=20)
 
     # Show All button to display all employees
-    show_button = Button(search_frame, text='Show All', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command= lambda: show_all(search_combobox, search_entry))
+    show_button = Button(search_frame, text='Show All', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D',
+                         command=lambda: show_all(search_combobox, search_entry))
     show_button.grid(row=0, column=3)
 
     # Horizontal and vertical scrollbars for the treeview (employee table)
@@ -331,30 +364,27 @@ def employee_form(window):
     vertical_scrollbar = Scrollbar(top_frame, orient=VERTICAL)
 
     # Treeview to display employee data in table form
-    treeview = ttk.Treeview(top_frame, columns=('empId', 'name', 'email', 'gender', 'dob', 'contact', 'employement_type',
-                                                'education', 'work_shift', 'address', 'doj', 'salary', 'usertype'), show='headings',
-                                                yscrollcommand=vertical_scrollbar.set, xscrollcommand=horizontal_scrollbar.set)
+    treeview = ttk.Treeview(top_frame, columns=('empId', 'name', 'email', 'gender', 'contact',
+                                                'education', 'address', 'doj', 'salary', 'usertype'),
+                            show='headings', yscrollcommand=vertical_scrollbar.set, xscrollcommand=horizontal_scrollbar.set)
 
     # Configuring the scrollbar behavior for the treeview
     horizontal_scrollbar.pack(side=BOTTOM, fill=X)
-    vertical_scrollbar.pack(side=RIGHT, fill=Y, pady=(10,0))
+    vertical_scrollbar.pack(side=RIGHT, fill=Y, pady=(10, 0))
 
     horizontal_scrollbar.config(command=treeview.xview)
     vertical_scrollbar.config(command=treeview.yview)
 
     # Packing the treeview
-    treeview.pack(pady=(10,0))
+    treeview.pack(pady=(10, 0))
 
     # Defining columns and their headings in the treeview
     treeview.heading('empId', text='EmpId')
     treeview.heading('name', text='Name')
     treeview.heading('email', text='Email')
     treeview.heading('gender', text='Gender')
-    treeview.heading('dob', text='Date of Birth')
     treeview.heading('contact', text='Contact')
-    treeview.heading('employement_type', text='Employement Type')
     treeview.heading('education', text='Education')
-    treeview.heading('work_shift', text='Work Shift')
     treeview.heading('address', text='Address')
     treeview.heading('doj', text='Date of Joining')
     treeview.heading('salary', text='Salary')
@@ -366,22 +396,19 @@ def employee_form(window):
     treeview.column('email', width=180)
     treeview.column('gender', width=80)
     treeview.column('contact', width=100)
-    treeview.column('dob', width=100)
-    treeview.column('employement_type', width=120)
     treeview.column('education', width=120)
-    treeview.column('work_shift', width=100)
     treeview.column('address', width=200)
     treeview.column('doj', width=100)
     treeview.column('salary', width=140)
     treeview.column('usertype', width=120)
 
-    treeview_data() # show all the employees information in mysql
+    treeview_data()  # show all the employees information in mysql
 
     # Frame to hold employee details form (input fields)
     detail_frame = Frame(employee_frame, bg='white')
     detail_frame.place(x=20, y=280)
 
-    # Labels and Entry fields for employee details (e.g., EmpId, Name, Email, etc.)
+    # Labels and Entry fields for employee details
     empId_label = Label(detail_frame, text='EmpId', font=('times new roman', 12), bg='white')
     empId_label.grid(row=0, column=0, padx=20, pady=10, sticky='w')
     empId_entry = Entry(detail_frame, font=('times new roman', 12), bg='lightyellow')
@@ -405,101 +432,82 @@ def employee_form(window):
     gender_combobox.set('Select Gender')
     gender_combobox.grid(row=1, column=1)
 
-    dob_label = Label(detail_frame, text='Date of Birth', font=('times new roman', 12), bg='white')
-    dob_label.grid(row=1, column=2, padx=20, pady=10, sticky='w')
-
-    # DateEntry widget for selecting the Date of Birth
-    dob_date_entry = DateEntry(detail_frame, width=18, font=('times new roman', 12), state='readonly', date_pattern='dd/mm/yyyy')
-    dob_date_entry.grid(row=1, column=3)
-
     contact_label = Label(detail_frame, text='Contact', font=('times new roman', 12), bg='white')
-    contact_label.grid(row=1, column=4, padx=20, pady=10, sticky='w')
+    contact_label.grid(row=1, column=2, padx=20, pady=10, sticky='w')
     contact_entry = Entry(detail_frame, font=('times new roman', 12), bg='lightyellow')
-    contact_entry.grid(row=1, column=5, padx=20, pady=10)
-
-    # Employment Type selection
-    employement_type_label = Label(detail_frame, text='Employement Type', font=('times new roman', 12), bg='white')
-    employement_type_label.grid(row=2, column=0, padx=20, pady=10, sticky='w')
-    employement_type_combobox = ttk.Combobox(detail_frame, values=('Full Time', 'Part Time', 'Casual', 'Contract', 'Intern'), font=('times new roman', 12), width=18, state='readonly')
-    employement_type_combobox.set('Select Type')
-    employement_type_combobox.grid(row=2, column=1)
+    contact_entry.grid(row=1, column=3, padx=20, pady=10)
 
     # Education selection
     education_label = Label(detail_frame, text='Education', font=('times new roman', 12), bg='white')
-    education_label.grid(row=2, column=2, padx=20, pady=10, sticky='w')
+    education_label.grid(row=2, column=0, padx=20, pady=10, sticky='w')
 
     education_options = ["B.Tech", "B.Com", "M.Tech", "M.Com", "B.Sc", "M.Sc", "BBA", "MBA", "LLB", "LLM", "B.Arch", "M.Arch"]
     education_combobox = ttk.Combobox(detail_frame, values=education_options, font=('times new roman', 12), width=18, state='readonly')
     education_combobox.set('Select Education')
-    education_combobox.grid(row=2, column=3)
-
-    # Work shift selection
-    work_shift_label = Label(detail_frame, text='Work Shift', font=('times new roman', 12), bg='white')
-    work_shift_label.grid(row=2, column=4, padx=20, pady=10, sticky='w')
-    work_shift_combobox = ttk.Combobox(detail_frame, values=('Morning', 'Evening', 'Night'), font=('times new roman', 12), width=18, state='readonly')
-    work_shift_combobox.set('Select Work Shift')
-    work_shift_combobox.grid(row=2, column=5)
+    education_combobox.grid(row=2, column=1)
 
     # Address entry (multiline text widget)
     address_label = Label(detail_frame, text='Address', font=('times new roman', 12), bg='white')
-    address_label.grid(row=3, column=0, padx=20, pady=10, sticky='w')
+    address_label.grid(row=2, column=2, padx=20, pady=10, sticky='w')
     address_text = Text(detail_frame, width=20, height=3, font=('times new roman', 12), bg='lightyellow')
-    address_text.grid(row=3, column=1, rowspan=2)
+    address_text.grid(row=2, column=3, rowspan=2)
 
     # Date of Joining entry
     doj_label = Label(detail_frame, text='Date of Joining', font=('times new roman', 12), bg='white')
-    doj_label.grid(row=3, column=2, padx=20, pady=10, sticky='w')
+    doj_label.grid(row=3, column=0, padx=20, pady=10, sticky='w')
     doj_date_entry = DateEntry(detail_frame, width=18, font=('times new roman', 12), state='readonly', date_pattern='dd/mm/yyyy')
-    doj_date_entry.grid(row=3, column=3)
-
-    # User Type selection
-    usertype_label = Label(detail_frame, text='User Type', font=('times new roman', 12), bg='white')
-    usertype_label.grid(row=4, column=2, padx=20, pady=10, sticky='w')
-    usertype_combobox = ttk.Combobox(detail_frame, values=('Admin', 'Employee'), font=('times new roman', 12), width=18, state='readonly')
-    usertype_combobox.set('Select User Type')
-    usertype_combobox.grid(row=4, column=3)
+    doj_date_entry.grid(row=3, column=1)
 
     # Salary entry
     salary_label = Label(detail_frame, text='Salary', font=('times new roman', 12), bg='white')
-    salary_label.grid(row=3, column=4, padx=20, pady=10, sticky='w')
+    salary_label.grid(row=1, column=4, padx=20, pady=10, sticky='w')
     salary_entry = Entry(detail_frame, font=('times new roman', 12), bg='lightyellow')
-    salary_entry.grid(row=3, column=5, padx=20, pady=10)
+    salary_entry.grid(row=1, column=5, padx=20, pady=10)
+
+    # User Type selection
+    usertype_label = Label(detail_frame, text='User Type', font=('times new roman', 12), bg='white')
+    usertype_label.grid(row=2, column=4, padx=20, pady=10, sticky='w')
+    usertype_combobox = ttk.Combobox(detail_frame, values=('Admin', 'Employee'), font=('times new roman', 12), width=18, state='readonly')
+    usertype_combobox.set('Select User Type')
+    usertype_combobox.grid(row=2, column=5)
 
     # Password entry for user creation
     password_label = Label(detail_frame, text='Password', font=('times new roman', 12), bg='white')
-    password_label.grid(row=4, column=4, padx=20, pady=10, sticky='w')
+    password_label.grid(row=3, column=4, padx=20, pady=10, sticky='w')
     password_entry = Entry(detail_frame, font=('times new roman', 12), bg='lightyellow')
-    password_entry.grid(row=4, column=5, padx=20, pady=10)
+    password_entry.grid(row=3, column=5, padx=20, pady=10)
 
     # Frame for Add, Update, Delete, and Clear buttons
     button_frame = Frame(employee_frame, bg='white')
     button_frame.place(x=200, y=520)
 
     # Add Button
-    add_button = Button(button_frame, text='Add', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command=lambda: add_employee(empId_entry.get(), name_entry.get(), email_entry.get(), gender_combobox.get(),
-                                                                                                                                                                 dob_date_entry.get(), contact_entry.get(), employement_type_combobox.get(),
-                                                                                                                                                                 education_combobox.get(), work_shift_combobox.get(), address_text.get(1.0, END),
-                                                                                                                                                                 doj_date_entry.get(), salary_entry.get(), usertype_combobox.get(), password_entry.get()))
+    add_button = Button(button_frame, text='Add', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D',
+                        command=lambda: add_employee(empId_entry.get(), name_entry.get(), email_entry.get(), gender_combobox.get(),
+                                                     contact_entry.get(), education_combobox.get(), address_text.get(1.0, END),
+                                                     doj_date_entry.get(), salary_entry.get(), usertype_combobox.get(), password_entry.get()))
     add_button.grid(row=0, column=0, padx=20)
 
     # Update Button
-    update_button = Button(button_frame, text='Update', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command= lambda: update_employee(empId_entry.get(), name_entry.get(), email_entry.get(), gender_combobox.get(),
-                                                                                                                                                                           dob_date_entry.get(), contact_entry.get(), employement_type_combobox.get(),
-                                                                                                                                                                           education_combobox.get(), work_shift_combobox.get(), address_text.get(1.0, END),
-                                                                                                                                                                           doj_date_entry.get(), salary_entry.get(), usertype_combobox.get(), password_entry.get()))
+    update_button = Button(button_frame, text='Update', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D',
+                           command=lambda: update_employee(empId_entry.get(), name_entry.get(), email_entry.get(), gender_combobox.get(),
+                                                           contact_entry.get(), education_combobox.get(), address_text.get(1.0, END),
+                                                           doj_date_entry.get(), salary_entry.get(), usertype_combobox.get(), password_entry.get()))
     update_button.grid(row=0, column=1, padx=20)
 
     # Delete Button
-    delete_button = Button(button_frame, text='Delete', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command=lambda: delete_employee(empId_entry.get()))
+    delete_button = Button(button_frame, text='Delete', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D',
+                           command=lambda: delete_employee(empId_entry.get()))
     delete_button.grid(row=0, column=2, padx=20)
 
     # Clear Button to reset the form
-    clear_button = Button(button_frame, text='Clear', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D', command= lambda: clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,
-                                                                                                                                                                      contact_entry, employement_type_combobox, education_combobox, work_shift_combobox,
-                                                                                                                                                                      address_text, doj_date_entry, salary_entry, usertype_combobox, password_entry, True))
+    clear_button = Button(button_frame, text='Clear', font=('times new roman', 12), width=10, cursor='hand2', fg='white', bg='#0F4D7D',
+                          command=lambda: clear_fields(empId_entry, name_entry, email_entry, gender_combobox,
+                                                       contact_entry, education_combobox, address_text, doj_date_entry,
+                                                       salary_entry, usertype_combobox, password_entry, True))
     clear_button.grid(row=0, column=3, padx=20)
 
-    treeview.bind('<ButtonRelease-1>',lambda event: select_data(event, empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox,contact_entry,
-                                                    employement_type_combobox, education_combobox, work_shift_combobox,address_text, doj_date_entry,
-                                                    salary_entry, usertype_combobox, password_entry)) # left click any row select_data function will be called for that
+    treeview.bind('<ButtonRelease-1>', lambda event: select_data(event, empId_entry, name_entry, email_entry, gender_combobox, contact_entry,
+                                                                 education_combobox, address_text, doj_date_entry,
+                                                                 salary_entry, usertype_combobox, password_entry))  # left click any row select_data function will be called for that
     return employee_frame
