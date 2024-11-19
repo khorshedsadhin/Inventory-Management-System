@@ -123,12 +123,22 @@ def add_employee(empid, name, email, gender, contact, education, address, doj, s
 
     # Contact validation: 11 digits, starts with "01", third digit 3-9, other 8 can be any digit
     if not re.fullmatch(r"01[3-9]\d{8}", contact):
-        messagebox.showerror('Error', 'Contact number must be 11 digits, start with "01", and have the third digit between 3 and 9.')
+        messagebox.showerror('Error', 'Invalid contact number!')
         return
 
     # Gmail validation: contains "@gmail.com", all lowercase
     if not re.fullmatch(r"[a-z0-9._%+-]+@gmail\.com", email):
-        messagebox.showerror('Error', 'Email must be a valid Gmail address with only lowercase letters and no special characters other than ".", "_", "%" or "+".')
+        messagebox.showerror('Error', 'Email must be a valid Gmail address!')
+        return
+
+    # Salary validation: must be a positive integer
+    if not re.fullmatch(r"\d+", salary):
+        messagebox.showerror('Error', 'Salary must be a valid integer number!')
+        return
+
+    # Password validation: at least 4 characters
+    if not re.fullmatch(r".{4,}", password):
+        messagebox.showerror('Error', 'Password must be at least 4 characters long!')
         return
 
     # Connect to the database
@@ -196,12 +206,22 @@ def update_employee(empid, name, email, gender, contact, education, address, doj
 
     # Contact validation: 11 digits, starts with "01", third digit 3-9, other 8 can be any digit
     if not re.fullmatch(r"01[3-9]\d{8}", contact):
-        messagebox.showerror('Error', 'Contact number must be 11 digits, start with "01", and have the third digit between 3 and 9.')
+        messagebox.showerror('Error', 'Invalid contact number!')
         return
 
     # Gmail validation: contains "@gmail.com", all lowercase
     if not re.fullmatch(r"[a-z0-9._%+-]+@gmail\.com", email):
-        messagebox.showerror('Error', 'Email must be a valid Gmail address with only lowercase letters and no special characters other than ".", "_", "%" or "+".')
+        messagebox.showerror('Error', 'Email must be a valid Gmail address!')
+        return
+
+    # Salary validation: must be a positive integer
+    if not re.fullmatch(r"\d+", salary):
+        messagebox.showerror('Error', 'Salary must be a valid integer number!')
+        return
+
+    # Password validation: at least 4 characters
+    if not re.fullmatch(r".{4,}", password):
+        messagebox.showerror('Error', 'Password must be at least 4 characters long!')
         return
 
     # Connect to the database
@@ -474,8 +494,16 @@ def employee_form(window):
     # Password entry for user creation
     password_label = Label(detail_frame, text='Password', font=('times new roman', 12), bg='white')
     password_label.grid(row=3, column=4, padx=20, pady=10, sticky='w')
-    password_entry = Entry(detail_frame, font=('times new roman', 12), bg='lightyellow')
+
+    # Set the 'show' parameter to '*' to mask the input
+    password_entry = Entry(detail_frame, font=('times new roman', 12), bg='lightyellow', show='*')
     password_entry.grid(row=3, column=5, padx=20, pady=10)
+
+    # Add a hint label below the password entry field
+    password_hint_label = Label(detail_frame, text='must be at least 4 characters',
+                                font=('times new roman', 10), fg='grey', bg='white')
+    password_hint_label.grid(row=4, column=5, padx=20, sticky='w')
+
 
     # Frame for Add, Update, Delete, and Clear buttons
     button_frame = Frame(employee_frame, bg='white')
