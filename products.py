@@ -1,5 +1,71 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
+from employees import connect_database
+
+def treeview_data(treeview):
+    cursor, connection = connect_database()
+    if not cursor or not connection:
+        return
+    try:
+        cursor.execute('USE inventory_system')
+        cursor.execute('SELECT * FROM product_data')
+        records = cursor.fetchall()
+
+        # Clear existing rows and repopulate treeview with fetched records
+        treeview.delete(*treeview.get_children())
+        for record in records:
+            treeview.insert('', END, values=record)
+    except Exception as e:
+        messagebox.showerror('Error', f'Error due to {e}')
+    finally:
+        cursor.close()
+        connection.close()
+
+def fetch_supplier_category(category_combobox,supplier_combobox):
+    category_option=[]
+    supplier_option=[]
+    cursor,connection=connect_database()
+    if not cursor or not connection:
+        return
+    cursor.execute('USE inventory_system')
+    cursor.execute('SELECT name from category_data')
+    names=cursor.fetchall()
+    if len(names)>0:
+        category_combobox.set('Select')
+        for name in names:
+            category_option.append(name[0])
+        category_combobox.config(value=category_option)
+
+    cursor.execute('SELECT name from supplier_data')
+    names=cursor.fetchall()
+    if len(names)>0:
+        supplier_combobox.set('Select')
+        for name in names:
+            supplier_option.append(name[0])
+        supplier_combobox.config(value=supplier_option)
+
+
+
+
+def add_product(category,supplier,name,price,quantity,status,treeview):
+    if category=='Empty':
+        messagebox.showerror('ERROR','Please add categories')
+    elif supplier=='Empty':
+        messagebox.showerror('ERROR','Please add suppliers')
+    elif category=='Select' or supplier=='Select' or name=='' or price=='' or quantity=='' or status=='Select Status':
+        messagebox.showerror('ERROR','All Fields are required')
+    else:
+        cursor, connection = connect_database()
+        if not cursor or not connection:
+            return
+        cursor.execute('USE inventory_system')
+        cursor.execute('CREATE TABLE IF NOT EXISTS product_data (id INT AUTO_INCREMENT PRIMARY KEY, category VARCHAR(100), supplier VARCHAR(100), price DECIMAL(10,2), quantity INT, status VARCHAR(50))')
+        cursor.execute('INSERT INTO product_data (category,supplier,name,price,quantity,status) VALUES(%s,%s,%s,%s,%s,%s)',(category,supplier,name,price,quantity,status))
+
+        connection.commit()
+        messagebox.showinfo('Success','Data is inserted successfully')
+        treeview_data(treeview)
 
 def product_form(window):
     global back_button, back_image
@@ -60,7 +126,7 @@ def product_form(window):
     button_frame.grid(row=7, columnspan=2, pady=(30, 10))
 
     add_button = Button(button_frame, text='Add', font=('times new roman', 14), width=8, cursor='hand2', fg='white',
-                        bg='#0F4D7D')
+                        bg='#0F4D7D', command=lambda :add_product(category_combobox.get(),supplier_combobox.get(),name_entry.get(),price_entry.get(),quantity_entry.get(),status_combobox.get(),treeview))
     add_button.grid(row=0, column=0, padx=10)
 
     update_button = Button(button_frame, text='Update', font=('times new roman', 14), width=8, cursor='hand2', fg='white',
@@ -115,3 +181,4 @@ def product_form(window):
     treeview.heading('price', text='Price')
     treeview.heading('quantity', text='Quantity')
     treeview.heading('status', text='Status')
+    fetch_supplier_category(category_combobox,supplier_combobox)

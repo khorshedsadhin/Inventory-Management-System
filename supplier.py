@@ -1,3 +1,4 @@
+import re
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
@@ -74,36 +75,50 @@ def show_all(treeview,search_entry):
    search_entry.delete(0,END)
 
 
-def update_supplier(invoice,name,contact,description,treeview):
-   index=treeview.selection()
-   if not index:
-       messagebox.showerror('Error','No row is selected')
-       return
-   cursor,connection=connect_database()
-   if not cursor or not connection:
-         return
-   try:
-    cursor.execute('use inventory_system ')
-    cursor.execute('SELECT * from supplier_data WHERE invoice=%s',invoice)
-    current_data=cursor.fetchone()
-    current_data=current_data[1:]
+def update_supplier(invoice, contact, name, description, treeview):
+    index = treeview.selection()
+    if not index:
+        messagebox.showerror('Error', 'No row is selected')
+        return
 
-    new_data=(name,contact,description)
+    # Contact validation: 11 digits, starts with "01", third digit 3-9, other 8 can be any digit
+    if not re.fullmatch(r"01[3-9]\d{8}", contact):
+        messagebox.showerror('Error', 'Invalid contact number!')
+        return
 
-    if current_data==new_data:
-      messagebox.showinfo('Info','No changes detected')
-      return
+    cursor, connection = connect_database()
+    if not cursor or not connection:
+        return
 
-    cursor.execute('UPDATE supplier_data SET name=%s,contact=%s,description=%s WHERE invoice=%s,(name,contact,description,invoice)')
-    connection.commit()
-    messagebox.showinfo('Info','Data is updated')
-    treeview_data(treeview)
+    try:
+        cursor.execute('USE inventory_system')
+        cursor.execute('SELECT * FROM supplier_data WHERE invoice=%s', (invoice,))
+        current_data = cursor.fetchone()
+        if not current_data:
+            messagebox.showerror('Error', 'Supplier not found')
+            return
 
-   except Exception as e:
-    messagebox.showerror('Error',f'Error due to {e}')
-   finally:
-    cursor.close()
-    connection.close()
+        current_data = current_data[1:]  # Skip the `invoice`
+        new_data = (name, contact, description)
+
+        if current_data == new_data:
+            messagebox.showinfo('Info', 'No changes detected')
+            return
+
+        cursor.execute(
+            'UPDATE supplier_data SET name=%s, contact=%s, description=%s WHERE invoice=%s',
+            (name, contact, description, invoice)
+        )
+        connection.commit()
+        messagebox.showinfo('Info', 'Data is updated')
+        treeview_data(treeview)
+
+    except Exception as e:
+        messagebox.showerror('Error', f'Error due to {e}')
+    finally:
+        cursor.close()
+        connection.close()
+
 
 
 
@@ -113,61 +128,79 @@ def select_data(event,invoice_entry,name_entry,contact_entry,description_text,tr
    actual_content=content['values']
    invoice_entry.delete(0,END)
    name_entry.delete(0,END)
+
+
    contact_entry.delete(0,END)
    description_text.delete(1.0,END)
 
    invoice_entry.insert(0,actual_content[0])
    name_entry.insert(0,actual_content[1])
-   contact_entry.insert(0,actual_content[2])
+
+   # Check if contact number has a leading "0" and add it if missing
+   contact_number = str(actual_content[2])
+   if not contact_number.startswith("0"):
+      contact_number = "0" + contact_number
+
+   contact_entry.insert(0,contact_number)
    description_text.insert(1.0,actual_content[3])
 
 
 def treeview_data(treeview):
-   cursor,connection=connect_database ()
-   if not cursor or not connection:
-         return
+    cursor, connection = connect_database()
+    if not cursor or not connection:
+        return
 
-   try:
-    cursor.execute('use inventory_system')
-    cursor.execute('select * from supplier_data')
-    records=cursor.fetchall()
-    treeview.delete(*treeview.get_children())
-    for record in records:
-      treeview.insert('',END,values=record)
-   except Exception as e:
-    messagebox.showerror('Error',f'Error due to {e}')
-   finally:
-    cursor.close()
-    connection.close()
+    try:
+        cursor.execute('USE inventory_system')
+        cursor.execute('SELECT * FROM supplier_data')
+        records = cursor.fetchall()
+
+        treeview.delete(*treeview.get_children())  # Clear existing data
+        for record in records:
+            treeview.insert('', END, values=record)
+
+    except Exception as e:
+        messagebox.showerror('Error', f'Error due to {e}')
+    finally:
+        cursor.close()
+        connection.close()
 
 
-def add_supplier(invoice, name, contact, description, treeview):
-    if invoice == '' or name == '' or contact == '' or description == '':
+
+def add_supplier(invoice, contact, name, description, treeview):
+    if not invoice or not name or not contact or not description:
         messagebox.showerror('Error', 'All fields are required')
-    else:
-        cursor, connection = connect_database()
+        return
 
-        if not cursor or not connection:
+    # Contact validation: 11 digits, starts with "01", third digit 3-9, other 8 can be any digit
+    if not re.fullmatch(r"01[3-9]\d{8}", contact):
+        messagebox.showerror('Error', 'Invalid contact number!')
+        return
+
+    cursor, connection = connect_database()
+    if not cursor or not connection:
+        return
+
+    try:
+        cursor.execute('USE inventory_system')
+        cursor.execute('SELECT * FROM supplier_data WHERE invoice=%s', (invoice,))
+        if cursor.fetchone():
+            messagebox.showerror('Error', 'Invoice already exists')
             return
 
-        try:
-            cursor.execute('USE inventory_system')
-            cursor.execute('SELECT * FROM supplier_data WHERE invoice=%s', (invoice,))
-            if cursor.fetchone():
-                messagebox.showerror('Error', 'Id already exists')
-                return
+        cursor.execute(
+            'INSERT INTO supplier_data (invoice, name, contact, description) VALUES (%s, %s, %s, %s)',
+            (invoice, name, contact, description)
+        )
+        connection.commit()
+        messagebox.showinfo('Info', 'Data is inserted successfully')
+        treeview_data(treeview)
 
-            cursor.execute('INSERT INTO supplier_data VALUES (%s, %s, %s, %s)', (invoice, name, contact, description))
-            connection.commit()
-            messagebox.showinfo('Info', 'Data is inserted')
-            treeview_data(treeview)
-
-        except Exception as e:
-            messagebox.showerror('Error', f'Error due to {e}')
-
-        finally:
-            cursor.close()
-            connection.close()
+    except Exception as e:
+        messagebox.showerror('Error', f'Error due to {e}')
+    finally:
+        cursor.close()
+        connection.close()
 
 
 # Function to create the supplier form UI
