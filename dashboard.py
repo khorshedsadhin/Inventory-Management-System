@@ -1,7 +1,9 @@
 from tkinter import *
+import time
 
 # import from another python file
 from employees import employee_form
+from employees import connect_database
 from supplier import supplier_form
 from category import category_form
 from products import product_form
@@ -20,6 +22,69 @@ def show_form(form_function, window):
 
     # Create and display the new frame by calling the provided form function
     current_frame = form_function(window)
+
+def initialize_database():
+    cursor, connection = connect_database()
+    if not cursor or not connection:
+        return
+
+    # Create the database if it doesn't exist
+    cursor.execute('CREATE DATABASE IF NOT EXISTS inventory_system')
+    cursor.execute('USE inventory_system')
+
+    # Create the tables if they don't exist
+    cursor.execute("CREATE TABLE IF NOT EXISTS employee_data (empid INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(100), gender VARCHAR(50), contact VARCHAR(30), education VARCHAR(30), address VARCHAR(100), doj VARCHAR(30), salary VARCHAR(50), usertype VARCHAR(50), password VARCHAR(50))")
+    cursor.execute("CREATE TABLE IF NOT EXISTS product_data (id INT AUTO_INCREMENT PRIMARY KEY, category VARCHAR(100), supplier VARCHAR(100), price DECIMAL(10,2), quantity INT, status VARCHAR(50))")
+    cursor.execute("CREATE TABLE IF NOT EXISTS supplier_data (invoice INT PRIMARY KEY, name VARCHAR(100), contact VARCHAR(15), description TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS category_data (id INT PRIMARY KEY, name VARCHAR(100), description TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS sales_data (sale_id INT AUTO_INCREMENT PRIMARY KEY, product_id INT, quantity_sold INT, sale_date DATETIME)")
+
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+def update(subtitleLabel, stat_labels):
+    """
+    Updates the count labels and subtitle label periodically.
+    """
+    cursor, connection = connect_database()
+    if not cursor or not connection:
+        return
+
+    cursor.execute('USE inventory_system')
+
+    # Fetch and update employee count
+    cursor.execute('SELECT * FROM employee_data')
+    emp_records = cursor.fetchall()
+    stat_labels['employee'].config(text=len(emp_records))
+
+    # Fetch and update supplier count
+    cursor.execute('SELECT * FROM supplier_data')
+    sup_records = cursor.fetchall()
+    stat_labels['supplier'].config(text=len(sup_records))
+
+    # Fetch and update category count
+    cursor.execute('SELECT * FROM category_data')
+    cat_records = cursor.fetchall()
+    stat_labels['category'].config(text=len(cat_records))
+
+    # Fetch and update product count
+    cursor.execute('SELECT * FROM product_data')
+    prod_records = cursor.fetchall()
+    stat_labels['product'].config(text=len(prod_records))
+
+    # Fetch and update sales count (example query; adjust as needed)
+    cursor.execute('SELECT COUNT(*) FROM sales_data')
+    sales_count = cursor.fetchone()[0]
+    stat_labels['sales'].config(text=sales_count)
+
+    # Update subtitle label with current date and time
+    date_time = time.strftime('%I:%M:%S %p on %A, %B %d, %Y')
+    subtitleLabel.config(text=f'Welcome Admin\t\t\t {date_time}')
+
+    # Schedule the next update
+    subtitleLabel.after(1000, lambda: update(subtitleLabel, stat_labels))
 
 
 # GUI part
@@ -44,11 +109,17 @@ def create_logout_button(window):
     logoutButton = Button(window, text='Logout', font=('times new roman', 20, 'bold'), fg='white', bg='#0f4d7d')
     logoutButton.place(x=1100, y=10)
 
-def create_subtitle(window):
-    """Creates and places the subtitle label below the title."""
+
+def create_subtitle(window, stat_labels):
+    """
+    Creates and places the subtitle label below the title.
+    """
     subtitleLabel = Label(window, text='Welcome Admin\t\t Date: 08-07-2024\t\t Time: 12:36:17 pm',
                           font=('times new roman', 15), bg='#4d636d', fg='white')
     subtitleLabel.place(x=0, y=70, relwidth=1)
+
+    # Start updating
+    update(subtitleLabel, stat_labels)
 
 def create_left_menu(window):
     """Creates the left frame with buttons and icons."""
@@ -64,6 +135,15 @@ def create_left_menu(window):
     sales_icon = PhotoImage(file='assets/sales.png')
     exit_icon = PhotoImage(file='assets/exit.png')
 
+    # Store image references in the `window` to prevent garbage collection
+    window.logoImage = logoImage
+    window.employee_icon = employee_icon
+    window.supplier_icon = supplier_icon
+    window.category_icon = category_icon
+    window.products_icon = products_icon
+    window.sales_icon = sales_icon
+    window.exit_icon = exit_icon
+
     # Logo at the top
     imageLabel = Label(leftFrame, image=logoImage)
     imageLabel.pack()
@@ -73,8 +153,6 @@ def create_left_menu(window):
     menuLabel.pack(fill=X)
 
     # Create buttons with icons
-    # without lambda this function will call automatically when the code is running (ex: without the click of employee button)
-    # lambda is needed when the callback function has parameters
     create_menu_button(leftFrame, employee_icon, ' Employees', lambda: show_form(employee_form, window))
     create_menu_button(leftFrame, supplier_icon, ' Suppliers', lambda: show_form(supplier_form, window))
     create_menu_button(leftFrame, category_icon, ' Categories', lambda: show_form(category_form, window))
@@ -82,8 +160,8 @@ def create_left_menu(window):
     create_menu_button(leftFrame, sales_icon, ' Sales', show_sales)
     create_menu_button(leftFrame, exit_icon, ' Exit', window.quit)
 
-    # Return the images to prevent garbage collection
     return [logoImage, employee_icon, supplier_icon, category_icon, products_icon, sales_icon, exit_icon]
+
 
 def create_menu_button(frame, icon, text, callback):
     """Creates a menu button inside the given frame."""
@@ -96,8 +174,10 @@ def show_sales():
     # Add logic to display sales-related functionality
 
 
-def create_stat_frame(window, x, y, bg_color, icon_path, title, count):
-    """Creates a statistics frame with an icon, title, and count."""
+def create_stat_frame(window, x, y, bg_color, icon_path, title):
+    """
+    Creates a statistics frame with an icon, title, and count.
+    """
     frame = Frame(window, bg=bg_color, bd=3, relief=RIDGE)
     frame.place(x=x, y=y, height=170, width=280)
 
@@ -108,32 +188,42 @@ def create_stat_frame(window, x, y, bg_color, icon_path, title, count):
     title_label = Label(frame, text=title, bg=bg_color, fg='white', font=('times new roman', 15, 'bold'))
     title_label.pack()
 
-    count_label = Label(frame, text=count, bg=bg_color, fg='white', font=('times new roman', 30, 'bold'))
+    count_label = Label(frame, text='0', bg=bg_color, fg='white', font=('times new roman', 30, 'bold'))
     count_label.pack()
 
-    # Return the image reference to prevent garbage collection
-    return icon
+    # Return the count label and the icon reference
+    return count_label, icon
+
 
 
 def create_dashboard(window):
-    """Main function to create and place all the dashboard statistics frames."""
+    """
+    Main function to create and place all the dashboard statistics frames.
+    """
+    stat_labels = {}
+
     # Create employee frame
-    emp_icon = create_stat_frame(window, 400, 125, '#2C3E50', 'assets/total_emp.png', 'Total Employees', '0')
+    emp_label, emp_icon = create_stat_frame(window, 400, 125, '#2C3E50', 'assets/total_emp.png', 'Total Employees')
+    stat_labels['employee'] = emp_label
 
     # Create supplier frame
-    sup_icon = create_stat_frame(window, 800, 125, '#8E44AD', 'assets/total_sup.png', 'Total Suppliers', '0')
+    sup_label, sup_icon = create_stat_frame(window, 800, 125, '#8E44AD', 'assets/total_sup.png', 'Total Suppliers')
+    stat_labels['supplier'] = sup_label
 
     # Create categories frame
-    cat_icon = create_stat_frame(window, 400, 310, '#27AE60', 'assets/total_cat.png', 'Total Categories', '0')
+    cat_label, cat_icon = create_stat_frame(window, 400, 310, '#27AE60', 'assets/total_cat.png', 'Total Categories')
+    stat_labels['category'] = cat_label
 
     # Create products frame
-    prod_icon = create_stat_frame(window, 800, 310, '#2C3E50', 'assets/total_prod.png', 'Total Products', '0')
+    prod_label, prod_icon = create_stat_frame(window, 800, 310, '#2C3E50', 'assets/total_prod.png', 'Total Products')
+    stat_labels['product'] = prod_label
 
     # Create sales frame
-    sales_icon = create_stat_frame(window, 600, 495, '#E74C3C', 'assets/total_sales.png', 'Total Sales', '0')
+    sales_label, sales_icon = create_stat_frame(window, 600, 495, '#E74C3C', 'assets/total_sales.png', 'Total Sales')
+    stat_labels['sales'] = sales_label
 
-    # Return all icons to prevent garbage collection
-    return [emp_icon, sup_icon, cat_icon, prod_icon, sales_icon]
+    # Return all count labels and icons to prevent garbage collection
+    return stat_labels, [emp_icon, sup_icon, cat_icon, prod_icon, sales_icon]
 
 def create_window():
     """Main function to create and run the window."""
@@ -143,15 +233,18 @@ def create_window():
     window.config(bg='white')
 
     center_window(window)  # Center the window on the screen
+    initialize_database()
 
     # Create components
     bg_image = create_title(window)
     create_logout_button(window)
-    create_subtitle(window)
-    icons = create_left_menu(window)  # Store the icon images to prevent garbage collection
+    create_left_menu(window)  # Store the icon images to prevent garbage collection
 
-    # Create the dashboard frames (Total Employees, Total Suppliers, etc.)
-    dashboard_icons = create_dashboard(window)
+    # Create the dashboard frames and retrieve the stat_labels dictionary
+    stat_labels, dashboard_icons = create_dashboard(window)
+
+    # Create the subtitle and pass stat_labels to it
+    create_subtitle(window, stat_labels)
 
     # Run the Tkinter event loop
     window.mainloop()
