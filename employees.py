@@ -344,7 +344,7 @@ def employee_form(window):
     employee_frame.place(x=200, y=100)
 
     # Create a heading label for the employee management section
-    heading_label = Label(employee_frame, text='Manage Employee Details', font=('times new roman', 16, 'bold'), bg='#0F4D7D', fg='white')
+    heading_label = Label(employee_frame, text='Manage Employee Details', font=('Helvetica', 16, 'bold'), bg='#0F4D7D', fg='white')
     heading_label.place(x=0, y=0, relwidth=1)
 
     # Top frame for search options

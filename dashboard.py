@@ -1,3 +1,5 @@
+"""todos: window.destroy() is a issue after clicking logout button"""
+
 from tkinter import *
 import time
 
@@ -100,14 +102,20 @@ def create_title(window):
     """Creates and places the title label at the top of the window."""
     bg_image = PhotoImage(file='assets/inventory.png')
     titleLabel = Label(window, image=bg_image, compound=LEFT, text='  Inventory Management System',
-                       font=('times new roman', 40, 'bold'), bg='#010c48', fg='white', anchor='w', padx=20)
+                       font=('Helvetica', 32, 'bold'), bg='#010c48', fg='white', anchor='w', padx=20)
     titleLabel.place(x=0, y=0, relwidth=1)
     return bg_image
 
 def create_logout_button(window):
     """Creates and places the logout button."""
-    logoutButton = Button(window, text='Logout', font=('times new roman', 20, 'bold'), fg='white', bg='#0f4d7d')
+    logoutButton = Button(window, text='Logout', font=('Helvetica', 18, 'bold'), fg='white', bg='#0f4d7d', command=lambda: show_login_form(window))
     logoutButton.place(x=1100, y=10)
+
+def show_login_form(window):
+    window.destroy()
+
+    from loginform import login_form
+    login_form()
 
 
 def create_subtitle(window, stat_labels):
@@ -115,7 +123,7 @@ def create_subtitle(window, stat_labels):
     Creates and places the subtitle label below the title.
     """
     subtitleLabel = Label(window, text='Welcome Admin\t\t Date: 08-07-2024\t\t Time: 12:36:17 pm',
-                          font=('times new roman', 15), bg='#4d636d', fg='white')
+                          font=('Helvetica', 12), bg='#4d636d', fg='white')
     subtitleLabel.place(x=0, y=70, relwidth=1)
 
     # Start updating
@@ -149,7 +157,7 @@ def create_left_menu(window):
     imageLabel.pack()
 
     # Menu label
-    menuLabel = Label(leftFrame, text='Menu', font=('times new roman', 20), bg='#009688')
+    menuLabel = Label(leftFrame, text='Menu', font=('Helvetica', 20, 'bold'), bg='#009688')
     menuLabel.pack(fill=X)
 
     # Create buttons with icons
@@ -165,7 +173,7 @@ def create_left_menu(window):
 
 def create_menu_button(frame, icon, text, callback):
     """Creates a menu button inside the given frame."""
-    button = Button(frame, image=icon, compound=LEFT, text=text, font=('times new roman', 20, 'bold'),
+    button = Button(frame, image=icon, compound=LEFT, text=text, font=('Helvetica', 19, 'bold'),
                     anchor='w', padx=10, command=callback)
     button.pack(fill=X)
 
@@ -185,10 +193,10 @@ def create_stat_frame(window, x, y, bg_color, icon_path, title):
     icon_label = Label(frame, image=icon, bg=bg_color)
     icon_label.pack(pady=10)
 
-    title_label = Label(frame, text=title, bg=bg_color, fg='white', font=('times new roman', 15, 'bold'))
+    title_label = Label(frame, text=title, bg=bg_color, fg='white', font=('Helvetica', 15, 'bold'))
     title_label.pack()
 
-    count_label = Label(frame, text='0', bg=bg_color, fg='white', font=('times new roman', 30, 'bold'))
+    count_label = Label(frame, text='0', bg=bg_color, fg='white', font=('Helvetica', 30, 'bold'))
     count_label.pack()
 
     # Return the count label and the icon reference
@@ -248,6 +256,3 @@ def create_window():
 
     # Run the Tkinter event loop
     window.mainloop()
-
-# Call the main function to create the window
-create_window()

@@ -214,7 +214,7 @@ def supplier_form(window):
    supplier_frame.place(x=200, y=100)
 
    # Create a heading label for the supplier section
-   heading_label = Label(supplier_frame, text='Manage Supplier Details', font=('times new roman', 16, 'bold'), bg='#0F4D7D', fg='white')
+   heading_label = Label(supplier_frame, text='Manage Supplier Details', font=('Helvetica', 16, 'bold'), bg='#0F4D7D', fg='white')
    heading_label.place(x=0, y=0, relwidth=1)  # relwidth=1 ensures the label spans the width of the frame
 
    # Back button to exit the supplier form

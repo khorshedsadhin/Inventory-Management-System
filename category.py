@@ -126,7 +126,7 @@ def category_form(window):
     category_frame.place(x=200, y=100)
 
     # Heading label for the category form
-    heading_label = Label(category_frame, text='Manage Category Details', font=('times new roman', 16, 'bold'), bg='#0F4D7D', fg='white')
+    heading_label = Label(category_frame, text='Manage Category Details', font=('Helvetica', 16, 'bold'), bg='#0F4D7D', fg='white')
     heading_label.place(x=0, y=0, relwidth=1)
 
     # Back button for navigating back, with image and position

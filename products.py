@@ -81,7 +81,7 @@ def product_form(window):
     left_frame = Frame(product_frame, bg='white', bd=2, relief=RIDGE)
     left_frame.place(x=20, y=40)
 
-    heading_label = Label(left_frame, text='Manage Product Details', font=('times new roman', 16, 'bold'),
+    heading_label = Label(left_frame, text='Manage Product Details', font=('Helvetica', 16, 'bold'),
                           bg='#0f4d7d', fg='white')
     heading_label.grid(row=0, columnspan=2, sticky='we')
 
