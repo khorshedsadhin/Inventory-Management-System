@@ -88,7 +88,8 @@ def login_form():
         img = PhotoImage(file="assets/login.png")  # Use your image path here
         image_label = Label(frame, image=img, bg="white")
         image_label.grid(row=0, column=0, padx=10, pady=10)
-        image_label.image = img  # Keep a reference to the image
+        image_label.image = img  # Store reference in the image_label to prevent garbage collection
+        login_window.img_reference = img  # Store reference in login_window to prevent garbage collection
     except Exception as e:
         print(f"Error loading image: {e}")
 
@@ -115,6 +116,10 @@ def login_form():
 
     eye_button = Button(form_frame, image=eye_closed_img, bg="white", bd=0, command=lambda: toggle_password_visibility(password_entry, eye_button))
     eye_button.grid(row=4, column=1, padx=5)
+
+    # Store image references in the window to prevent garbage collection
+    login_window.eye_open_img = eye_open_img
+    login_window.eye_closed_img = eye_closed_img
 
     # Login button
     login_button = Button(form_frame, text="Login", font=("Helvetica", 14), bg="#0F4D7D", fg="white", width=20,

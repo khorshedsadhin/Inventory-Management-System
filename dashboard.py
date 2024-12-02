@@ -1,9 +1,7 @@
-"""todos: window.destroy() is a issue after clicking logout button"""
-
 from tkinter import *
 import time
 
-# import from another python file
+# Import from other Python files
 from employees import employee_form
 from employees import connect_database
 from supplier import supplier_form
@@ -12,6 +10,7 @@ from products import product_form
 
 # Global variable to track the currently displayed frame, ensuring only one frame is visible at a time
 current_frame = None
+
 def show_form(form_function, window):
     """
     Ensures only one frame is visible at a time by hiding the current frame if it exists,
@@ -35,12 +34,54 @@ def initialize_database():
     cursor.execute('USE inventory_system')
 
     # Create the tables if they don't exist
-    cursor.execute("CREATE TABLE IF NOT EXISTS employee_data (empid INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(100), gender VARCHAR(50), contact VARCHAR(30), education VARCHAR(30), address VARCHAR(100), doj VARCHAR(30), salary VARCHAR(50), usertype VARCHAR(50), password VARCHAR(50))")
-    cursor.execute("CREATE TABLE IF NOT EXISTS product_data (id INT AUTO_INCREMENT PRIMARY KEY, category VARCHAR(100), supplier VARCHAR(100), price DECIMAL(10,2), quantity INT, status VARCHAR(50))")
-    cursor.execute("CREATE TABLE IF NOT EXISTS supplier_data (invoice INT PRIMARY KEY, name VARCHAR(100), contact VARCHAR(15), description TEXT)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS category_data (id INT PRIMARY KEY, name VARCHAR(100), description TEXT)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS sales_data (sale_id INT AUTO_INCREMENT PRIMARY KEY, product_id INT, quantity_sold INT, sale_date DATETIME)")
-
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS employee_data (
+            empid INT PRIMARY KEY,
+            name VARCHAR(100),
+            email VARCHAR(100),
+            gender VARCHAR(50),
+            contact VARCHAR(30),
+            education VARCHAR(30),
+            address VARCHAR(100),
+            doj VARCHAR(30),
+            salary VARCHAR(50),
+            usertype VARCHAR(50),
+            password VARCHAR(50)
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS product_data (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            category VARCHAR(100),
+            supplier VARCHAR(100),
+            price DECIMAL(10,2),
+            quantity INT,
+            status VARCHAR(50)
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS supplier_data (
+            invoice INT PRIMARY KEY,
+            name VARCHAR(100),
+            contact VARCHAR(15),
+            description TEXT
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS category_data (
+            id INT PRIMARY KEY,
+            name VARCHAR(100),
+            description TEXT
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_data (
+            sale_id INT AUTO_INCREMENT PRIMARY KEY,
+            product_id INT,
+            quantity_sold INT,
+            sale_date DATETIME
+        )
+    """)
 
     connection.commit()
     cursor.close()
@@ -88,7 +129,6 @@ def update(subtitleLabel, stat_labels):
     # Schedule the next update
     subtitleLabel.after(1000, lambda: update(subtitleLabel, stat_labels))
 
-
 # GUI part
 def center_window(window, width=1270, height=668):
     """Centers the window on the screen."""
@@ -101,29 +141,31 @@ def center_window(window, width=1270, height=668):
 def create_title(window):
     """Creates and places the title label at the top of the window."""
     bg_image = PhotoImage(file='assets/inventory.png')
-    titleLabel = Label(window, image=bg_image, compound=LEFT, text='  Inventory Management System',
-                       font=('Helvetica', 32, 'bold'), bg='#010c48', fg='white', anchor='w', padx=20)
+    titleLabel = Label(
+        window,
+        image=bg_image,
+        compound=LEFT,
+        text='\t   Inventory Management System',
+        font=('Helvetica', 32, 'bold'),
+        bg='#010c48',
+        fg='white',
+        anchor='w',
+        padx=20
+    )
     titleLabel.place(x=0, y=0, relwidth=1)
     return bg_image
-
-def create_logout_button(window):
-    """Creates and places the logout button."""
-    logoutButton = Button(window, text='Logout', font=('Helvetica', 18, 'bold'), fg='white', bg='#0f4d7d', command=lambda: show_login_form(window))
-    logoutButton.place(x=1100, y=10)
-
-def show_login_form(window):
-    window.destroy()
-
-    from loginform import login_form
-    login_form()
-
 
 def create_subtitle(window, stat_labels):
     """
     Creates and places the subtitle label below the title.
     """
-    subtitleLabel = Label(window, text='Welcome Admin\t\t Date: 08-07-2024\t\t Time: 12:36:17 pm',
-                          font=('Helvetica', 12), bg='#4d636d', fg='white')
+    subtitleLabel = Label(
+        window,
+        text='Welcome Admin\t\t Date: 08-07-2024\t\t Time: 12:36:17 pm',
+        font=('Helvetica', 12),
+        bg='#4d636d',
+        fg='white'
+    )
     subtitleLabel.place(x=0, y=70, relwidth=1)
 
     # Start updating
@@ -166,21 +208,27 @@ def create_left_menu(window):
     create_menu_button(leftFrame, category_icon, ' Categories', lambda: show_form(category_form, window))
     create_menu_button(leftFrame, products_icon, ' Products', lambda: product_form(window))
     create_menu_button(leftFrame, sales_icon, ' Sales', show_sales)
-    create_menu_button(leftFrame, exit_icon, ' Exit', window.quit)
+    create_menu_button(leftFrame, exit_icon, ' Exit', window.destroy)
 
     return [logoImage, employee_icon, supplier_icon, category_icon, products_icon, sales_icon, exit_icon]
 
-
 def create_menu_button(frame, icon, text, callback):
     """Creates a menu button inside the given frame."""
-    button = Button(frame, image=icon, compound=LEFT, text=text, font=('Helvetica', 19, 'bold'),
-                    anchor='w', padx=10, command=callback)
+    button = Button(
+        frame,
+        image=icon,
+        compound=LEFT,
+        text=text,
+        font=('Helvetica', 19, 'bold'),
+        anchor='w',
+        padx=10,
+        command=callback
+    )
     button.pack(fill=X)
 
 def show_sales():
     print("Sales button clicked")
     # Add logic to display sales-related functionality
-
 
 def create_stat_frame(window, x, y, bg_color, icon_path, title):
     """
@@ -201,8 +249,6 @@ def create_stat_frame(window, x, y, bg_color, icon_path, title):
 
     # Return the count label and the icon reference
     return count_label, icon
-
-
 
 def create_dashboard(window):
     """
@@ -245,7 +291,6 @@ def create_window():
 
     # Create components
     bg_image = create_title(window)
-    create_logout_button(window)
     create_left_menu(window)  # Store the icon images to prevent garbage collection
 
     # Create the dashboard frames and retrieve the stat_labels dictionary
