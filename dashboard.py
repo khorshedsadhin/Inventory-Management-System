@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 import time
 
 # Import from other Python files
@@ -208,9 +209,17 @@ def create_left_menu(window):
     create_menu_button(leftFrame, category_icon, ' Categories', lambda: show_form(category_form, window))
     create_menu_button(leftFrame, products_icon, ' Products', lambda: product_form(window))
     create_menu_button(leftFrame, sales_icon, ' Sales', show_sales)
-    create_menu_button(leftFrame, exit_icon, ' Exit', window.destroy)
+
+    # Exit button with confirmation dialog
+    create_menu_button(leftFrame, exit_icon, ' Exit', lambda: confirm_exit(window))
 
     return [logoImage, employee_icon, supplier_icon, category_icon, products_icon, sales_icon, exit_icon]
+
+def confirm_exit(window):
+    """Shows a confirmation message box before closing the application."""
+    response = messagebox.askyesno("Confirm Exit", "Are you sure you want to exit?")
+    if response:  # If the user clicked "Yes"
+        window.destroy()  # Close the window
 
 def create_menu_button(frame, icon, text, callback):
     """Creates a menu button inside the given frame."""
