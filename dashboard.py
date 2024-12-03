@@ -55,6 +55,7 @@ def initialize_database():
             id INT AUTO_INCREMENT PRIMARY KEY,
             category VARCHAR(100),
             supplier VARCHAR(100),
+            name VARCHAR(100),
             price DECIMAL(10,2),
             quantity INT,
             status VARCHAR(50)
@@ -207,7 +208,7 @@ def create_left_menu(window):
     create_menu_button(leftFrame, employee_icon, ' Employees', lambda: show_form(employee_form, window))
     create_menu_button(leftFrame, supplier_icon, ' Suppliers', lambda: show_form(supplier_form, window))
     create_menu_button(leftFrame, category_icon, ' Categories', lambda: show_form(category_form, window))
-    create_menu_button(leftFrame, products_icon, ' Products', lambda: product_form(window))
+    create_menu_button(leftFrame, products_icon, ' Products', lambda: show_form(product_form, window))
     create_menu_button(leftFrame, sales_icon, ' Sales', show_sales)
 
     # Exit button with confirmation dialog
