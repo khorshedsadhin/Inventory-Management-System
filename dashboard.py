@@ -8,6 +8,7 @@ from employees import connect_database
 from supplier import supplier_form
 from category import category_form
 from products import product_form
+from sales import sales_form
 
 # Global variable to track the currently displayed frame, ensuring only one frame is visible at a time
 current_frame = None
@@ -209,7 +210,7 @@ def create_left_menu(window):
     create_menu_button(leftFrame, supplier_icon, ' Suppliers', lambda: show_form(supplier_form, window))
     create_menu_button(leftFrame, category_icon, ' Categories', lambda: show_form(category_form, window))
     create_menu_button(leftFrame, products_icon, ' Products', lambda: show_form(product_form, window))
-    create_menu_button(leftFrame, sales_icon, ' Sales', show_sales)
+    create_menu_button(leftFrame, sales_icon, ' Sales', lambda: show_form(sales_form, window))
 
     # Exit button with confirmation dialog
     create_menu_button(leftFrame, exit_icon, ' Exit', lambda: confirm_exit(window))
@@ -235,10 +236,6 @@ def create_menu_button(frame, icon, text, callback):
         command=callback
     )
     button.pack(fill=X)
-
-def show_sales():
-    print("Sales button clicked")
-    # Add logic to display sales-related functionality
 
 def create_stat_frame(window, x, y, bg_color, icon_path, title):
     """
@@ -311,3 +308,6 @@ def create_window():
 
     # Run the Tkinter event loop
     window.mainloop()
+
+if __name__ == "__main__":
+    create_window()
