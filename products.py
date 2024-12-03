@@ -308,7 +308,7 @@ def product_form(window):
     treeview.heading('quantity', text='Quantity')
     treeview.heading('status', text='Status')
 
-    treeview.column('id', width=30)
+    treeview.column('id', width=35)
 
     fetch_supplier_category(category_combobox,supplier_combobox)
     treeview_data(treeview)
