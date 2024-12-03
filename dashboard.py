@@ -76,13 +76,13 @@ def initialize_database():
             description TEXT
         )
     """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS sales_data (
-            sale_id INT AUTO_INCREMENT PRIMARY KEY,
-            product_id INT,
-            quantity_sold INT,
-            sale_date DATETIME
-        )
+    cursor.execute("""CREATE TABLE IF NOT EXISTS sales_data (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            customer_name VARCHAR(255) NOT NULL,
+            contact_no VARCHAR(20),
+            date_time DATETIME NOT NULL,
+            total DECIMAL(10, 2) NOT NULL,
+            items JSON NOT NULL)
     """)
 
     connection.commit()
