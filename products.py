@@ -279,7 +279,7 @@ def product_form(window):
                            bg='#0F4D7D',command=lambda:search_product(search_combobox,search_entry,treeview))
     search_button.grid(row=0, column=2, padx=(10, 0), pady=10)
 
-    show_button = Button(search_frame, text='Show', font=('times new roman', 14), width=8, cursor='hand2', fg='white',
+    show_button = Button(search_frame, text='Show All', font=('times new roman', 14), width=8, cursor='hand2', fg='white',
                          bg='#0F4D7D',command=lambda:show_all(treeview,search_combobox,search_entry) )
     show_button.grid(row=0, column=3, padx=10)
 
@@ -294,9 +294,12 @@ def product_form(window):
                             show='headings', yscrollcommand=Scrolly.set, xscrollcommand=Scrollx.set)
     Scrolly.pack(side=RIGHT, fill=Y)
     Scrollx.pack(side=BOTTOM, fill=X)
+
     Scrollx.config(command=treeview.xview)
     Scrolly.config(command=treeview.yview)
+
     treeview.pack(fill=BOTH, expand=1)
+
     treeview.heading('id', text='Id')
     treeview.heading('category', text='Category')
     treeview.heading('supplier', text='Supplier')
@@ -304,6 +307,9 @@ def product_form(window):
     treeview.heading('price', text='Price')
     treeview.heading('quantity', text='Quantity')
     treeview.heading('status', text='Status')
+
+    treeview.column('id', width=30)
+
     fetch_supplier_category(category_combobox,supplier_combobox)
     treeview_data(treeview)
     treeview.bind('<ButtonRelease-1>',lambda event:select_data(event,treeview,category_combobox,supplier_combobox,

@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 
 from dashboard import create_window  # Import the function for admin dashboard (not run until called)
+from billingpage import employee_billingPage
 from employees import connect_database  # Import the function to connect to the database
 
 def check_login(employee_id, password, login_window):
@@ -31,7 +32,7 @@ def check_login(employee_id, password, login_window):
                 create_window()  # Call the admin dashboard
             elif usertype == 'Employee':  # If usertype is Employee
                 login_window.destroy()  # Close login window
-                employee_dashboard()  # Placeholder for employee dashboard (to be implemented later)
+                employee_billingPage()  # Placeholder for employee dashboard (to be implemented later)
             else:
                 messagebox.showerror('Error', 'Invalid UserType')  # Invalid usertype
         else:
@@ -132,13 +133,6 @@ def login_form():
 
     # Run the login window
     login_window.mainloop()
-
-# Placeholder for employee dashboard function
-def employee_dashboard():
-    """
-    Placeholder function to display employee dashboard (not implemented yet).
-    """
-    messagebox.showinfo("Info", "Employee Dashboard will be created later.")
 
 # Start the login form when the script is run
 if __name__ == "__main__":
