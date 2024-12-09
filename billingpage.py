@@ -562,7 +562,8 @@ def employee_billing_page():
     # Run the Tkinter event loop
     window.mainloop()
 
-
+"""
 # Running the main window
 if __name__ == "__main__":
     employee_billing_page()
+"""
